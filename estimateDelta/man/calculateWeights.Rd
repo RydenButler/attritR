@@ -39,14 +39,6 @@ in order to adjust for differences in the distributions of X and p(W) between
 treated and nontreated respondents. For more information on the method, 
 see Huber (2012) below.
 }
-\examples{
-D <- sample(c(0, 1), 100 , replace = T) # vector of treatment indicators
-X <- rnorm(100, 0, 3) # vector of covariates
-Z <- sample(1:5, 100, replace = T, prob = c(0.3, 0.2, 0.2, 0.2, 0.1)) # vector of instruments
-Y <- 5*D + 2*X + rnorm(100, 0, 3) # vector of Y values, related to D and X
-calculateWeights(Y = Y, D = D, X = X, Z = Z)
-
-}
 \references{
 Huber (2012): "Identification of Average Treatment Effects in 
 Social Experiments Under Alternative Forms of Attrition.", Journal of 

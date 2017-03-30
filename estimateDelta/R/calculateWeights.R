@@ -32,16 +32,9 @@
 #'  \item{Z}{A numeric vector of instrumental variable}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
-#' @examples
-#' D <- sample(c(0, 1), 100 , replace = T) # vector of treatment indicators
-#' X <- rnorm(100, 0, 3) # vector of covariates
-#' Z <- sample(1:5, 100, replace = T, prob = c(0.3, 0.2, 0.2, 0.2, 0.1)) # vector of instruments
-#' Y <- 5*D + 2*X + rnorm(100, 0, 3) # vector of Y values, related to D and X
-#' calculateWeights(Y = Y, D = D, X = X, Z = Z)
-#' 
 #' @rdname calculateWeights
 #' @export
-# Note that glm() requires stats package
+
 calculateWeights <- function(Y, X, D, Z) {
   # Calculate attrition indicator, R 
   # R is test participation: if Y is NOT NA, R=1; if Y is NA, R=0
