@@ -4,7 +4,6 @@
 #' in order to obtain internally and externally valid estimates for the average treatment
 #' effect in cases of attrition.
 #' 
-#'
 #' @param Y Numeric outcome variable. Can contain missing values. 
 #' @param D Treatment variable, being 1 for treatment and 0 for control group.
 #' @param X Observed covariates.
@@ -26,15 +25,20 @@
 #' Social Experiments Under Alternative Forms of Attrition.", Journal of 
 #' Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
 #'
-#' @return The product of the response propensity score ($p(W)$) and 
-#' treatment propensity score ($\pi(X, p(W))$) for T=1 and T=0.
-#'  \item{squares}{The sum of the squared values}
-#'  \item{x}{The first object input} 
-#'  \item{y}{The second object input}
+#' @return A numeric vector of the product of the response propensity score and treatment propensity score 
+#'  \item{Y}{An object of responses which may or may not include NA}
+#'  \item{D}{A numeric vector (binary; treatment = 1, contro = 0)} 
+#'  \item{X}{A numeric vector of observed covariates}
+#'  \item{Z}{A numeric vector of instrumental variable}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' @note 
 #' @examples
-
+#' D <- sample(c(0, 1), 100 , replace = T) # vector of treatment indicators
+#' X <- rnorm(100, 0, 3) # vector of covariates
+#' Z <- sample(1:5, 100, replace = T, prob = c(0.3, 0.2, 0.2, 0.2, 0.1)) # vector of instruments
+#' Y <- 5*D + 2*X + rnorm(100, 0, 3) # vector of Y values, related to D and X
+#' calculateWeights(Y = Y, D = D, X = X, Z = Z)
+#' 
 #' @rdname calculateWeights
 #' @export
 # Note that glm() requires stats package
