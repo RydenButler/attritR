@@ -6,13 +6,9 @@ Date: 2017-03-28
 Author: Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 Maintainer: Ryden Butler <r.butler@wustl.edu>
 Description: Estimate treatment effects on the treatment group in randomized experiments when outcomes are only partially observed due to attrition and non-response in follow-up surveys.
-Reference: Huber (2012): "Identification of Average Treatment Effects in Social Experiments Under Alternative Forms of Attrition.", Journal of Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
-Depends:
-    R (>= 3.0.0),
-    methods 
+Depends: R (>= 3.0.0), methods
 License: GPL (>= 2)
 RoxygenNote: 6.0.1
-Imports:
-  stats
-Collate:
-    'calculateWeights.R'
+Imports: stats
+Collate: 'calculateWeights.R'
+Built: R 3.3.2; ; 2017-03-30 01:48:22 UTC; unix
