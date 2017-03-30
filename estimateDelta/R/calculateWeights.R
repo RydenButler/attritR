@@ -40,26 +40,35 @@
 # Note that glm() requires stats package
 calculateWeights <- function(Y, X, D, Z) {
   # Calculate attrition indicator, R 
-  R <- as.numeric(!is.na(Y))  # if Y != NA, R = 1, R=0 otherwise
-  # Calculate p(W) - using the instrument
-  p_w <- glm(R ~ D + X + Z, family = binomial(link = logit)) 
+  # R is test participation: if Y is NOT NA, R=1; if Y is NA, R=0
+  R <- as.numeric(!is.na(Y))
+  
+  #### Calculate response propensity score p(W)
+  # fitting generalized linear model: response propensity R regressed on treatment status,
+  # observed covariates, and instrument
+  p_w <- glm(formula = R ~ D + X + Z, family = binomial(link = logit)) 
   # Predict values given the model
   p_w_fits <- predict(object = p_w,
-                      newdata = data.frame(cbind(X, D, Z)),
-                      type = 'response')
-  # Calculate pi(X, p(W)) - using instrumented probabilities and covariates
-  pi <- glm(D ~ X + runif(100,0,1), family = binomial(link = logit), maxit = 1000) 
+    newdata = data.frame(cbind(X, D, Z)),
+    type = 'response')
+  
+  #### Calculate treatment propensity score pi(X, p(W))
+  # fitting GLM: treatment propensity D regressed on instrumented probabilities 
+  # and covariates
+  pi <- glm(formula = D ~ X + runif(100,0,1), 
+    family = binomial(link = logit), maxit = 1000) 
   # Predict values given the model
   pi_fits <- predict(object = pi,
-                     newdata = data.frame(cbind(X, p_w_fits)),
-                     type = 'response')
-  # Note treated respondents
+    newdata = data.frame(cbind(X, p_w_fits)),
+    type = 'response')
+  
+  # Identify treated respondents
   Treated <- which(D == 1)
   # Create empty vector of weights
   Weights <- rep(NA, length(pi_fits))
-  # Fill in weights for treated respondents
+  # Estimate weights for treated group
   Weights[Treated] <- p_w_fits[Treated] * pi_fits[Treated]
-  # Fill in weights for untreated respondents
+  # Estimate weights for control group
   Weights[-Treated] <- p_w_fits[-Treated] * (1 - pi_fits[-Treated])
   return(Weights)
 }
