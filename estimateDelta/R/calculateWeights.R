@@ -31,7 +31,7 @@
 #'  \item{X}{A numeric vector of observed covariates}
 #'  \item{Z}{A numeric vector of instrumental variable}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
-#' @note 
+#' 
 #' @examples
 #' D <- sample(c(0, 1), 100 , replace = T) # vector of treatment indicators
 #' X <- rnorm(100, 0, 3) # vector of covariates
