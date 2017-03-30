@@ -1,12 +1,17 @@
 Package: estimateDelta
 Type: Package
-Title: What the package does (short line)
+Title: Estimating average treatment effect on the treated (or ATT)
 Version: 1.0
 Date: 2017-03-28
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
+Maintainer: Ryden Butler <r.butler@wustl.edu>
+Description: Estimate treatment effects on the treatment group in randomized experiments when outcomes are only partially observed due to attrition and non-response in follow-up surveys.
+Depends:
+    R (>= 3.0.0),
+    methods 
+License: GPL (>= 2)
 RoxygenNote: 6.0.1
 Imports:
   stats
+Collate:
+    'calculateWeights.R'
