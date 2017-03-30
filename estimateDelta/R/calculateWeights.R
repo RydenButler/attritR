@@ -17,10 +17,14 @@
 #' \code{D}, \code{Z})$ where $R$ denotes to the binary response variable 
 #' being 1 if \code{Y} is observed and 0 otherwise (attrition), and the treatment
 #' propensity score, defined as $\pi(\code{X}, p(W)) = Pr(\code{D}=1 | \code{X}, p(W), R=1)$.
-#' Response and treatment 
+#' Response and treatment propensity scores are multiplied for treatment and control group
+#' in order to adjust for differences in the distributions of X and p(W) between 
+#' treated and nontreated respondents.
 #' 
-#' 
-#'
+#' @references 
+#' Huber (2012): "Identification of Average Treatment Effects in Social Experiments Under 
+#' Alternative Forms of Attrition.", Journal of Educational and Behavioral Statistics,
+#' vol. 37, no. 3, 443-474.#'
 #'
 #' @return The product of the response propensity score and treatment propensity score 
 #' for T=1 and T=0.
