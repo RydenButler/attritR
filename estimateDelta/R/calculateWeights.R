@@ -1,8 +1,8 @@
-#' Calculating response propensity score and treatment propensity score.
+#' Calculating weights for treatment and control group under non-random attrition
 #'
-#' Estimates the weights for treatment and control group. Multiplies response propensity score
-#' and treatment propensity score for treatment and control group in order to to reweigh the
-#' estimated average treatment effect to account for different forms of attrition.
+#' \code{calculateWeights} estimates the weights for treatment and control group 
+#' in order to obtain internally and externally valid estimates for the average treatment
+#' effect in cases of attrition.
 #' 
 #'
 #' @param Y Numeric outcome variable. Can contain missing values. 
@@ -12,22 +12,22 @@
 #' 
 #' @details
 #' The function estimates the response propensity score and the treatment 
-#' propensity score to reweigh the observations and, thus, correct for non-random 
-#' attrition. The response propensity score is defined as $p(W) = Pr(R=1 | \code{X},
+#' propensity score to reweigh the observations and correct for attrition. 
+#' The response propensity score is defined as $p(W) = Pr(R=1 | \code{X},
 #' \code{D}, \code{Z})$ where $R$ denotes to the binary response variable 
 #' being 1 if \code{Y} is observed and 0 otherwise (attrition), and the treatment
 #' propensity score, defined as $\pi(\code{X}, p(W)) = Pr(\code{D}=1 | \code{X}, p(W), R=1)$.
 #' Response and treatment propensity scores are multiplied for treatment and control group
 #' in order to adjust for differences in the distributions of X and p(W) between 
-#' treated and nontreated respondents.
+#' treated and nontreated respondents. For more information on the method, 
+#' see Huber (2012) below.
 #' 
-#' @references 
-#' Huber (2012): "Identification of Average Treatment Effects in Social Experiments Under 
-#' Alternative Forms of Attrition.", Journal of Educational and Behavioral Statistics,
-#' vol. 37, no. 3, 443-474.#'
+#' @references Huber (2012): "Identification of Average Treatment Effects in 
+#' Social Experiments Under Alternative Forms of Attrition.", Journal of 
+#' Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
 #'
-#' @return The product of the response propensity score and treatment propensity score 
-#' for T=1 and T=0.
+#' @return The product of the response propensity score ($p(W)$) and 
+#' treatment propensity score ($\pi(X, p(W))$) for T=1 and T=0.
 #'  \item{squares}{The sum of the squared values}
 #'  \item{x}{The first object input} 
 #'  \item{y}{The second object input}
