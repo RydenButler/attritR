@@ -9,7 +9,8 @@ Current <- as.package('estimateDelta')
 load_all(Current)
 document(Current)
 
-devtools::use_package('stats')
+# This function should add dependencies to DESCRIPTION, but it doesn't
+#devtools::use_package('stats')
 
 # Create vector of treatment indicators
 D <- sample(c(0, 1), 100 , replace = T)

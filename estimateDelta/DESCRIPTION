@@ -15,4 +15,5 @@ RoxygenNote: 6.0.1
 Imports:
   stats
 Collate:
-    'calculateWeights.R'
+  'calculateWeights.R'
+
