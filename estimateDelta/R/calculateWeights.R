@@ -4,10 +4,11 @@
 #' in order to obtain internally and externally valid estimates for the average treatment
 #' effect in cases of attrition.
 #' 
-#' @param Y Numeric outcome variable. Can contain missing values. 
-#' @param D Treatment variable, being 1 for treatment and 0 for control group.
-#' @param X Observed covariates.
-#' @param Z Instrumental variable.
+#' @param Y Numeric vector of outcome variable. Non-response should be coded as NA. 
+#' @param D Numeric vector of treatment indicators.
+#' @param X Numeric vector of observed covariates.
+#' @param Z Numeric vector of instrumental variable.
+#' @param method String indicating method of probability estimation. Can be glm or gam.
 #' 
 #' @details
 #' The function estimates the response propensity score and the treatment 
@@ -30,34 +31,56 @@
 #'  \item{D}{A numeric vector (binary; treatment = 1, contro = 0)} 
 #'  \item{X}{A numeric vector of observed covariates}
 #'  \item{Z}{A numeric vector of instrumental variable}
+#'  \item{method}{A string indicating the method of probability estimation}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
 #' @rdname calculateWeights
 #' @export
 
-calculateWeights <- function(Y, X, D, Z) {
+calculateWeights <- function(Y, X, D, Z, method = 'glm') {
   # Calculate attrition indicator, R 
   # R is test participation: if Y is NOT NA, R=1; if Y is NA, R=0
   R <- as.numeric(!is.na(Y))
   
-  #### Calculate response propensity score p(W)
-  # fitting generalized linear model: response propensity R regressed on treatment status,
-  # observed covariates, and instrument
-  p_w <- glm(formula = R ~ D + X + Z, family = binomial(link = logit)) 
-  # Predict values given the model
-  p_w_fits <- predict(object = p_w,
-    newdata = data.frame(cbind(X, D, Z)),
-    type = 'response')
-  
-  #### Calculate treatment propensity score pi(X, p(W))
-  # fitting GLM: treatment propensity D regressed on instrumented probabilities 
-  # and covariates
-  pi <- glm(formula = D ~ X + runif(100,0,1), 
-    family = binomial(link = logit), maxit = 1000) 
-  # Predict values given the model
-  pi_fits <- predict(object = pi,
-    newdata = data.frame(cbind(X, p_w_fits)),
-    type = 'response')
+  if(method == 'glm'){
+    #### Calculate response propensity score p(W)
+    # fitting generalized linear model: response propensity R regressed on treatment status,
+    # observed covariates, and instrument
+    p_w <- glm(formula = R ~ D + X + Z, family = binomial(link = logit)) 
+    # Predict values given the model
+    p_w_fits <- predict(object = p_w,
+      newdata = data.frame(cbind(X, D, Z)),
+      type = 'response')
+    
+    #### Calculate treatment propensity score pi(X, p(W))
+    # fitting GLM: treatment propensity D regressed on instrumented probabilities 
+    # and covariates
+    pi <- glm(formula = D ~ X + runif(100,0,1), 
+              family = binomial(link = logit), maxit = 1000) 
+    # Predict values given the model
+    pi_fits <- predict(object = pi,
+                       newdata = data.frame(cbind(X, p_w_fits)),
+                       type = 'response')
+  } else {
+    #### Calculate response propensity score p(W)
+    # fitting generalized additive model: response propensity R regressed on treatment status,
+    # observed covariates, and instrument
+    p_w <- gam(formula = R ~ D + X + Z, family = binomial(link = logit)) 
+    # Predict values given the model
+    p_w_fits <- predict(object = p_w,
+                        newdata = data.frame(cbind(X, D, Z)),
+                        type = 'response')    
+    
+    #### Calculate treatment propensity score pi(X, p(W))
+    # fitting GAM: treatment propensity D regressed on instrumented probabilities 
+    # and covariates
+    pi <- gam(formula = D ~ X + runif(100,0,1), 
+              family = binomial(link = logit), maxit = 1000) 
+    # Predict values given the model
+    pi_fits <- predict(object = pi,
+                       newdata = data.frame(cbind(X, p_w_fits)),
+                       type = 'response')    
+  }
   
   # Identify treated respondents
   Treated <- which(D == 1)

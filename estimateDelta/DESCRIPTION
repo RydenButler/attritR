@@ -13,7 +13,8 @@ Depends:
 License: GPL (>= 2)
 RoxygenNote: 6.0.1
 Imports:
-  stats
+  stats,
+  gam
 Collate:
   'calculateWeights.R'
 

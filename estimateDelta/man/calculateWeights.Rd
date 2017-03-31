@@ -4,16 +4,18 @@
 \alias{calculateWeights}
 \title{Calculating weights for treatment and control group under non-random attrition}
 \usage{
-calculateWeights(Y, X, D, Z)
+calculateWeights(Y, X, D, Z, method = "glm")
 }
 \arguments{
-\item{Y}{Numeric outcome variable. Can contain missing values.}
+\item{Y}{Numeric vector of outcome variable. Non-response should be coded as NA.}
 
-\item{X}{Observed covariates.}
+\item{X}{Numeric vector of observed covariates.}
 
-\item{D}{Treatment variable, being 1 for treatment and 0 for control group.}
+\item{D}{Numeric vector of treatment indicators.}
 
-\item{Z}{Instrumental variable.}
+\item{Z}{Numeric vector of instrumental variable.}
+
+\item{method}{String indicating method of probability estimation. Can be glm or gam.}
 }
 \value{
 A numeric vector of the product of the response propensity score and treatment propensity score 
@@ -21,6 +23,7 @@ A numeric vector of the product of the response propensity score and treatment p
  \item{D}{A numeric vector (binary; treatment = 1, contro = 0)} 
  \item{X}{A numeric vector of observed covariates}
  \item{Z}{A numeric vector of instrumental variable}
+ \item{method}{A string indicating the method of probability estimation}
 }
 \description{
 \code{calculateWeights} estimates the weights for treatment and control group 

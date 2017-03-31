@@ -35,6 +35,9 @@ Y[order(Attrition, decreasing=TRUE)[1:15]] <- NA
 #              Factor = sample(c('a', 'b', 'c'), 100, replace = T))
 
 # Test calculateWeights
-MyWeights <- calculateWeights(Y = Y, D = D, X = X, Z = Z)
+MyGLMWeights <- calculateWeights(Y = Y, D = D, X = X, Z = Z)
+MyGAMWeight <- calculateWeights(Y = Y, D = D, X = X, Z = Z, method = 'gam')
 # Test weight in lm
 summary(lm(Y ~ X + D, weights = MyWeights))
+
+
