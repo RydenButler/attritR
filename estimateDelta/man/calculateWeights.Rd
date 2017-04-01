@@ -4,14 +4,14 @@
 \alias{calculateWeights}
 \title{Calculating weights for treatment and control group under non-random attrition}
 \usage{
-calculateWeights(Y, X, D, Z, method = "glm")
+calculateWeights(Y, D, X, Z, method = "glm")
 }
 \arguments{
 \item{Y}{Numeric vector of outcome variable. Non-response should be coded as NA.}
 
-\item{X}{Numeric vector of observed covariates.}
-
 \item{D}{Numeric vector of treatment indicators.}
+
+\item{X}{Numeric vector of observed covariates.}
 
 \item{Z}{Numeric vector of instrumental variable.}
 
