@@ -29,12 +29,15 @@ which(Z == 5)
 # Change 10 largest attrition values in Y to NA
 Y[order(Attrition, decreasing=TRUE)[1:15]] <- NA
 
+# Bind vectors together into single dataset
 MyData <- data.frame(cbind(Y, X, D, Z))
 
 
 
 # Test calculateWeights
 MyGLMWeights <- calculateWeights(Y = Y, D = D, X = X, Z = Z)
+# Test GAM weights
 MyGAMWeights <- calculateWeights(Y = Y, D = D, X = X, Z = Z, method = 'gam')
 
+# Test estimateDelta
 estimateDelta(Y ~ D + Binary + Continuous, instrument = ~ A, data = MyData)
