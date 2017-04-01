@@ -37,61 +37,58 @@
 #' @rdname calculateWeights
 #' @export
 
-calculateWeights <- function(Y, D, X, Z, method = 'glm') {
-  # Calculate attrition indicator, R 
+calculateWeights <- function(modelData, instrumentData, method = 'glm') {
+  # Recode Y as R
   # R is test participation: if Y is observed, R=1; else, R=0
-  R <- as.numeric(!is.na(Y))
-  
-  XVars <- paste(names(X), collapse = ' + ')
-  ZVars <- paste(names(Z), collapse = ' + ')
-  
-  FullData <- data.frame(cbind(Y, D, X, Z, R))
+  modelData[ , 1] <- as.numeric(!is.na(modelData[ , 1]))
+  # IMPORTANT NOTE:
+  ### This modelData must be structured as columns of Y, D, X, Z
+  ### Otherwise the following calculations are incorrect
   
   if(method == 'glm'){
     #### Calculate response propensity score p(W)
     # fitting generalized linear model: response propensity R regressed on treatment status,
     # observed covariates, and instrument
-    p_w <- glm(formula = formula(paste('R ~ D +', XVars, '+', ZVars)), 
+    p_w <- glm(formula = formula(paste(colnames(modelData)[1], '~ .')), 
                family = binomial(link = logit),
-               data = FullData) 
+               data = data.frame(modelData, instrumentData)) 
     # Predict values given the model
     p_w_fits <- predict(object = p_w,
-      newdata = data.frame(cbind(D, X, Z)),
+      newdata = data.frame(modelData[, -1], instrumentData),
       type = 'response')
-    
     #### Calculate treatment propensity score pi(X, p(W))
     # fitting GLM: treatment propensity D regressed on instrumented probabilities 
     # and covariates
-    pi <- glm(formula = formula(paste('D ~ p_w_fits +', XVars)), 
+    pi <- glm(formula = formula(paste(colnames(modelData)[2], '~ .')), 
               family = binomial(link = logit), 
               maxit = 1000, 
-              data = FullData) 
+              data = data.frame(modelData[ , -1], p_w_fits)) 
     # Predict values given the model
     pi_fits <- predict(object = pi,
-                       newdata = data.frame(cbind(X, p_w_fits)),
+                       newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
                        type = 'response')
   } else {
     #### Calculate response propensity score p(W)
     # fitting generalized additive model: response propensity R regressed on treatment status,
     # observed covariates, and instrument
-    p_w <- gam(formula = formula(paste('R ~ D +', XVars, '+', ZVars)), 
+    p_w <- gam(formula = formula(paste(colnames(modelData)[1], '~ .')), 
                family = binomial(link = logit),
-               data = FullData) 
+               data = data.frame(modelData, instrumentData))
     # Predict values given the model
     p_w_fits <- predict(object = p_w,
-                        newdata = data.frame(cbind(D, X, Z)),
+                        newdata = data.frame(modelData[, -1], instrumentData),
                         type = 'response')    
     
     #### Calculate treatment propensity score pi(X, p(W))
     # fitting GAM: treatment propensity D regressed on instrumented probabilities 
     # and covariates
-    pi <- gam(formula = formula(paste('D ~ p_w_fits +', XVars)), 
+    pi <- gam(formula = formula(paste(colnames(modelData)[2], '~ .')), 
               family = binomial(link = logit), 
               maxit = 1000,
-              data = FullData) 
+              data = data.frame(modelData[ , -1], p_w_fits)) 
     # Predict values given the model
     pi_fits <- predict(object = pi,
-                       newdata = data.frame(cbind(X, p_w_fits)),
+                       newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
                        type = 'response')    
   }
   

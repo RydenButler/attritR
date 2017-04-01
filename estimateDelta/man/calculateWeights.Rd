@@ -4,9 +4,11 @@
 \alias{calculateWeights}
 \title{Calculating weights for treatment and control group under non-random attrition}
 \usage{
-calculateWeights(Y, D, X, Z, method = "glm")
+calculateWeights(modelData, instrumentData, method = "glm")
 }
 \arguments{
+\item{method}{String indicating method of probability estimation. Can be glm or gam.}
+
 \item{Y}{Numeric vector of outcome variable. Non-response should be coded as NA.}
 
 \item{D}{Numeric vector of treatment indicators.}
@@ -14,8 +16,6 @@ calculateWeights(Y, D, X, Z, method = "glm")
 \item{X}{Numeric vector of observed covariates.}
 
 \item{Z}{Numeric vector of instrumental variable.}
-
-\item{method}{String indicating method of probability estimation. Can be glm or gam.}
 }
 \value{
 A numeric vector of the product of the response propensity score and treatment propensity score 
