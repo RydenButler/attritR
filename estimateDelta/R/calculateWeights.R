@@ -59,14 +59,15 @@ calculateWeights <- function(modelData, instrumentData, method = 'glm') {
     #### Calculate treatment propensity score pi(X, p(W))
     # fitting GLM: treatment propensity D regressed on instrumented probabilities 
     # and covariates
-    pi <- glm(formula = formula(paste(colnames(modelData)[2], '~ .')), 
+    pi <- glm(formula = formula(paste(colnames(data.frame(modelData[ , -1])), '~ .')), 
               family = binomial(link = logit), 
               maxit = 1000, 
               data = data.frame(modelData[ , -1], p_w_fits)) 
     # Predict values given the model
-    pi_fits <- predict(object = pi,
-                       newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
-                       type = 'response')
+      pi_fits <- predict(object = pi,
+                         newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
+                         type = 'response')
+
   } else {
     #### Calculate response propensity score p(W)
     # fitting generalized additive model: response propensity R regressed on treatment status,
@@ -82,7 +83,7 @@ calculateWeights <- function(modelData, instrumentData, method = 'glm') {
     #### Calculate treatment propensity score pi(X, p(W))
     # fitting GAM: treatment propensity D regressed on instrumented probabilities 
     # and covariates
-    pi <- gam(formula = formula(paste(colnames(modelData)[2], '~ .')), 
+    pi <- gam(formula = formula(paste(colnames(data.frame(modelData[ , -1])), '~ .')), 
               family = binomial(link = logit), 
               maxit = 1000,
               data = data.frame(modelData[ , -1], p_w_fits)) 

@@ -10,7 +10,7 @@ load_all(Current)
 document(Current)
 
 # This function should add dependencies to DESCRIPTION, but it doesn't
-#devtools::use_package('stats')
+#devtools::use_package('gam')
 
 # Create vector of treatment indicators
 D <- sample(c(0, 1), 100 , replace = T)
@@ -18,7 +18,7 @@ D <- sample(c(0, 1), 100 , replace = T)
 X <- data.frame(Binary = sample(c(0, 1), 100, replace = T), 
                 Continuous = rnorm(100, 0, 3))
 # Create vector of instruments
-Z <- data.frame(A = sample(1:5, 100, replace = T, prob = c(0.3, 0.2, 0.2, 0.2, 0.1)))
+Z <- data.frame(Z1 = sample(1:5, 100, replace = T, prob = c(0.3, 0.2, 0.2, 0.2, 0.1)))
 # Create vector of Y values, related to D and X
 Y <- 5*D + 1*X[,1] + 2*X[,2] + rnorm(100, 0, 3)
 # Create probabilistic attrtion vector
@@ -30,20 +30,34 @@ which(Z == 5)
 Y[order(Attrition, decreasing=TRUE)[1:15]] <- NA
 
 # Bind vectors together into single dataset
-MyData <- data.frame(cbind(Y, D, X, Z))
-
-
+NoXData <- data.frame(cbind(Y, D, Z))
+FullData <- data.frame(cbind(Y, D, X, Z))
 
 # Test calculateWeights
-MyGLMWeights <- calculateWeights(modelData = MyData[,-ncol(MyData)], 
-                                 instrumentData = Z)
+MyGLMWeights <- calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
+                                 instrumentData = NoXData[, ncol(NoXData)])
 # Test GAM weights
-MyGAMWeights <- calculateWeights(modelData = MyData[,-ncol(MyData)], 
-                                 instrumentData = Z, 
+MyGAMWeights <- calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
+                                 instrumentData = NoXData[,ncol(NoXData)], 
                                  method = 'gam')
 
 # Test estimateDelta
-estimateDelta(Y ~ D + Binary + Continuous, instrumentFormula = ~ A, data = MyData)
+estimateDelta(Y ~ D, instrumentFormula = ~ Z1, data = NoXData)
 
 # Test bootstrapDelta
-bootstrapDelta(Y ~ D + Binary + Continuous, ~ A, MyData)
+bootstrapDelta(Y ~ D, ~ Z1, NoXData)
+
+
+# Test calculateWeights
+MyGLMWeights <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
+                                 instrumentData = FullData[, ncol(FullData)])
+# Test GAM weights
+MyGAMWeights <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
+                                 instrumentData = FullData[,ncol(FullData)], 
+                                 method = 'gam')
+
+# Test estimateDelta
+estimateDelta(Y ~ D + Binary + Continuous, instrumentFormula = ~ Z1, data = FullData)
+
+# Test bootstrapDelta
+bootstrapDelta(Y ~ D + Binary + Continuous, ~ Z1, FullData)

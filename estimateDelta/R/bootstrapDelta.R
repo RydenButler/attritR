@@ -4,8 +4,8 @@ bootstrapDelta <- function(regressionFormula,
                            weightMethod = 'glm',
                            nBoots = 1000) {
   # Bootstrap data
-  BootsList <- lapply(X = 1:nBoots, FUN = function(x) MyData[sample(x = nrow(MyData),
-                                                             size = nrow(MyData),
+  BootsList <- lapply(X = 1:nBoots, FUN = function(x) data[sample(x = nrow(data),
+                                                             size = nrow(data),
                                                              replace = T), ])
   # Estimate Delta
   CoefMatrix <- sapply(BootsList, 

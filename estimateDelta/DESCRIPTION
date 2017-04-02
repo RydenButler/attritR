@@ -17,4 +17,6 @@ Imports:
   gam
 Collate:
   'calculateWeights.R'
+  'estimateDelta.R'
+  'bootstrapDelta.R'
 
