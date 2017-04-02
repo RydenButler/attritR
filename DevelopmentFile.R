@@ -30,14 +30,20 @@ which(Z == 5)
 Y[order(Attrition, decreasing=TRUE)[1:15]] <- NA
 
 # Bind vectors together into single dataset
-MyData <- data.frame(cbind(Y, X, D, Z))
+MyData <- data.frame(cbind(Y, D, X, Z))
 
 
 
 # Test calculateWeights
-MyGLMWeights <- calculateWeights(Y = Y, D = D, X = X, Z = Z)
+MyGLMWeights <- calculateWeights(modelData = MyData[,-ncol(MyData)], 
+                                 instrumentData = Z)
 # Test GAM weights
-MyGAMWeights <- calculateWeights(Y = Y, D = D, X = X, Z = Z, method = 'gam')
+MyGAMWeights <- calculateWeights(modelData = MyData[,-ncol(MyData)], 
+                                 instrumentData = Z, 
+                                 method = 'gam')
 
 # Test estimateDelta
-estimateDelta(Y ~ D + Binary + Continuous, instrument = ~ A, data = MyData)
+estimateDelta(Y ~ D + Binary + Continuous, instrumentFormula = ~ A, data = MyData)
+
+# Test bootstrapDelta
+bootstrapDelta(Y ~ D + Binary + Continuous, ~ A, MyData)
