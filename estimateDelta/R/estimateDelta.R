@@ -1,3 +1,42 @@
+#' Estimating the ATE given non-random attrition
+#'
+#' \code{estimateDelta} estimates the average treatment effect (ATE) under conditions of
+#' non-random attrition.
+#' 
+#' @param regressionFormula An object of class \code{formula} (or one that can be coerced to
+#' that class); a symbolic description of the model to be fitted.  \code{regressionFormula}
+#' is the model which will be used to estimate the ATE after accounting for non-random
+#' attrition.
+#' @param instrumentFormula An object of class \code{formula} (or one that can be coerced to
+#' that class); a symbolic description of the model to be fitted.  \code{instrumentFormula}
+#' is the model which estimates the weights used in the model which estimates the ATE.
+#' @param data A data frame which contains all variables to be used in both 
+#' \code{regressionFormula} and \code{instrumentFormula}.
+#' @param weightMethod An optional string indicating the estimation method to be used for
+#' generating the weights.  The default method is ___.
+#' 
+#' @details
+#' The function estimates the average treatment effect (ATE) after accounting for non-random
+#' attrition, using the method presented by Huber (2012).  Given non-random attrition, if we
+#' know the instrument(s) Z which are related to attrition, we can estimate weights to use
+#' when estimating the ATE such that we can recover the ATE despite non-random attrition.
+#' Defining the following variables as follows---R=whether the respondent responded (i.e.
+#' 0=attrition), D=treatment assignment, Y=outcome, p(W)=response propensity score, and
+#' pi=treatment propensity score---, we can estimate delta as:
+#' \deqn{\Delta=E[\frac{R \cdot D \cdot Y}{p(W) \cdot pi(X,p(W))}] - E[\frac{R \cdot (1-D) \cdot Y}{p(W) \cdot (1-pi(X,p(W)))}]}
+#' 
+#' @references Huber, Martin (2012): "Identification of Average Treatment Effects in 
+#' Social Experiments Under Alternative Forms of Attrition.", Journal of 
+#' Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
+#'
+#' @return A numeric vector of the product of the response propensity score and treatment propensity score 
+#'  \item{coefficients}{A numeric vector of the coefficients for the \code{regressionFormula}
+#'  model.}
+#' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
+#' 
+#' @rdname estimateDelta
+#' @export
+
 estimateDelta <- function(regressionFormula, 
                           instrumentFormula, 
                           data, 
