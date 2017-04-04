@@ -43,9 +43,8 @@
 #' @export
 
 calculateWeights <- function(modelData, instrumentData, method = 'glm') {
-  # Recode Y as a form of R, which denotes a binary response variable i.e., test participation:
-  # if Y is observed (non-attribution), 1; otherwise, 0.
-  # In modelData, the first column has values of R which are recoded binary values of Y.
+  # Recode Y as R
+  # R is test participation: if Y is observed, R=1; else R=0
   modelData[ , 1] <- as.numeric(!is.na(modelData[ , 1]))
   # IMPORTANT NOTE:
   ### This modelData must be structured as columns of Y, D, X, Z
@@ -63,7 +62,7 @@ calculateWeights <- function(modelData, instrumentData, method = 'glm') {
                         newdata = data.frame(modelData[, -1], instrumentData),
                         type = 'response')
     #### Calculate treatment propensity score pi(X, p(W))
-    # fitting GLM: treatment propensity (D) regressed on instrumental variable (D) and covariates (X)
+    # fitting GLM: treatment propensity (D) regressed on covariates (X) and fitted values of p_w
     pi <- glm(formula = formula(paste(colnames(data.frame(modelData[ , -1])), '~ .')), 
               family = binomial(link = logit), 
               maxit = 1000, 
@@ -86,7 +85,7 @@ calculateWeights <- function(modelData, instrumentData, method = 'glm') {
                         type = 'response')    
     
     #### Calculate treatment propensity score pi(X, p(W))
-    # fitting GAM: treatment propensity (D) regressed on instrumental variable (D) and covariates (X)
+    # fitting GAM: treatment propensity (D) regressed on covariates (X) and fitted values of p_w
     pi <- gam(formula = formula(paste(colnames(data.frame(modelData[ , -1])), '~ .')), 
               family = binomial(link = logit), 
               maxit = 1000,
