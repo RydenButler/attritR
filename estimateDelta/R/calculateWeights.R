@@ -35,6 +35,7 @@
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
 #' @rdname calculateWeights
+#' @importFrom 'gam' gam
 #' @export
 
 calculateWeights <- function(modelData, instrumentData, method = 'glm') {

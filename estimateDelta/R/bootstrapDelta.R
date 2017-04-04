@@ -6,10 +6,13 @@
 #' @param regressionFormula An object of class \code{formula} (or one that can be coerced to
 #' that class); a symbolic description of the model to be fitted.  \code{regressionFormula}
 #' is the model which will be used to estimate the ATE after accounting for non-random
-#' attrition.
+#' attrition. Formula must be of the form Y ~ D + ..., where Y is the outcome, D is the treatment,
+#' and ... represents any set of other covariates.
 #' @param instrumentFormula An object of class \code{formula} (or one that can be coerced to
 #' that class); a symbolic description of the model to be fitted.  \code{instrumentFormula}
 #' is the model which estimates the weights used in the model which estimates the ATE.
+#' Formula must be of the form ~ Z1 + ..., where Z1 represents some instrumental variable,
+#' and ... represents any other desired instrumental variables.
 #' @param data A data frame which contains all variables to be used in both 
 #' \code{regressionFormula} and \code{instrumentFormula}.
 #' @param weightMethod An optional string indicating the estimation method to be used for
@@ -21,8 +24,8 @@
 #' The function estimates standard errors for the average treatment effect (ATE)
 #' after accounting for non-random attrition. After drawing random samples with 
 #' replacement from the provided data (by default, 1000 samples), the function 
-#' estimates with the bootstrapped sampe the mean value, median, and standard errors 
-#' based on the 1,000 bootstrap replications. The function, thus, provides a measure of 
+#' estimates with the bootstrapped sample the mean value, median, and standard errors 
+#' based on the bootstrapped replications. The function, thus, provides a measure of 
 #' accuracy to the point estimates for the ATE.
 #' 
 #' @references Huber, Martin (2012): "Identification of Average Treatment Effects in 
