@@ -65,9 +65,9 @@ calculateWeights <- function(modelData, instrumentData, method = 'glm') {
               maxit = 1000, 
               data = data.frame(modelData[ , -1], p_w_fits)) 
     # Predict values given the model
-      pi_fits <- predict(object = pi,
-                         newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
-                         type = 'response')
+    pi_fits <- predict(object = pi,
+                       newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
+                       type = 'response')
 
   } else {
     #### Calculate response propensity score p(W)
@@ -93,15 +93,12 @@ calculateWeights <- function(modelData, instrumentData, method = 'glm') {
                        newdata = data.frame(modelData[ , -(1:2)], p_w_fits),
                        type = 'response')    
   }
-  
-  # Identify treated respondents
-  Treated <- which(D == 1)
-  # Create empty vector of weights
-  Weights <- rep(NA, length(pi_fits))
+
   # Estimate weights for treated group
-  Weights[Treated] <- p_w_fits[Treated] * pi_fits[Treated]
+  Weights <- p_w_fits * pi_fits
   # Estimate weights for control group
-  Weights[-Treated] <- p_w_fits[-Treated] * (1 - pi_fits[-Treated])
+  Weights[which(modelData[ , 2] != 1)] <- (p_w_fits[which(modelData[ , 2] != 1)] * 
+                                             (1 - pi_fits[which(modelData[ , 2] != 1)]))
   return(Weights)
 }
 

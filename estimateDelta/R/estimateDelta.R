@@ -58,6 +58,6 @@ estimateDelta <- function(regressionFormula,
   # Estimate model
   Model <- lm(formula = regressionFormula,
               weights = IPWs,
-              data = data.frame(ModelData, InstrumentData))
+              data = ModelData)
   return(Model$coefficients)
 }

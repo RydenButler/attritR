@@ -9,9 +9,6 @@ Current <- as.package('estimateDelta')
 load_all(Current)
 document(Current)
 
-# This function should add dependencies to DESCRIPTION, but it doesn't
-#devtools::use_package('gam')
-
 # Create vector of treatment indicators
 D <- sample(c(0, 1), 100 , replace = T)
 # A dataframe of covariates for later use 
@@ -33,13 +30,15 @@ Y[order(Attrition, decreasing=TRUE)[1:15]] <- NA
 NoXData <- data.frame(cbind(Y, D, Z))
 FullData <- data.frame(cbind(Y, D, X, Z))
 
+### Test on models without covariates
+
 # Test calculateWeights
-MyGLMWeights <- calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
-                                 instrumentData = NoXData[, ncol(NoXData)])
+calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
+                 instrumentData = NoXData[, ncol(NoXData)])
 # Test GAM weights
-MyGAMWeights <- calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
-                                 instrumentData = NoXData[,ncol(NoXData)], 
-                                 method = 'gam')
+calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
+                 instrumentData = NoXData[,ncol(NoXData)], 
+                 method = 'gam')
 
 # Test estimateDelta
 estimateDelta(Y ~ D, instrumentFormula = ~ Z1, data = NoXData)
@@ -47,6 +46,7 @@ estimateDelta(Y ~ D, instrumentFormula = ~ Z1, data = NoXData)
 # Test bootstrapDelta
 bootstrapDelta(Y ~ D, ~ Z1, NoXData)
 
+### Test on models including covariates
 
 # Test calculateWeights
 MyGLMWeights <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
