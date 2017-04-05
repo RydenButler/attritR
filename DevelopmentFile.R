@@ -94,3 +94,9 @@ Delta6 <- estimateDelta(Outcome ~ Treatment,
 Boot6 <- bootstrapDelta(Outcome ~ Treatment, 
                         ~ Z1, 
                         NoXData)
+
+### Check GAM arguments
+library(gam)
+WeightsGAM <- calculateWeights(modelData = FullData[ , -ncol(FullData)], 
+                               instrumentData = FullData[ , ncol(FullData)],
+                               p_W_Formula = R ~ D + Binary + s(Continuous))
