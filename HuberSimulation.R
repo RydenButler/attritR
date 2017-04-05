@@ -26,10 +26,18 @@ SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 BootSim <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         ~ Instrument, 
                         SimData)
+BootSim2 <- bootstrapDelta(Y ~ Treatment + Covariate, 
+                          ~ Instrument, 
+                          SimData,
+                          effectType = 'All')
 lm(Y ~ Treatment + Covariate)
 
 # Check unobservables
-BootSim2 <- bootstrapDelta(unY ~ Treatment + Covariate, 
+BootSim3 <- bootstrapDelta(unY ~ Treatment + Covariate, 
                           ~ Instrument, 
                           SimData)
+BootSim4 <- bootstrapDelta(unY ~ Treatment + Covariate, 
+                           ~ Instrument, 
+                           SimData,
+                           effectType = 'All')
 lm(unY ~ Treatment + Covariate)
