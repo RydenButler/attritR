@@ -10,7 +10,7 @@ load_all(Current)
 document(Current)
 
 # Create vector of treatment indicators
-Treatment <- sample(c(0, 1), 5000 , replace = T)
+Treatment <- sample(c(0, 1), 100 , replace = T)
 # A dataframe of covariates for later use 
 Covariates <- data.frame(Binary = sample(x = c(0, 1), 
                                          size = length(Treatment), 
@@ -58,7 +58,8 @@ Delta4 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous,
 # bootstrap
 Boot4 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
                         ~ Z1, 
-                        FullData)
+                        FullData,
+                        effectType = 'ATT')
 
 ### Check Proposition 5:
 
@@ -73,8 +74,10 @@ Delta5 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous,
 
 # bootstrap
 Boot5 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
-                            ~ Z1, 
-                            FullData)
+                        ~ Z1, 
+                        FullData,
+                        effectType = 'ATE'
+                        )
 
 ### Check Proposition 6:
 

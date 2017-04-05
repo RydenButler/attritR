@@ -66,15 +66,14 @@ calculateWeights <- function(modelData,
                              modelData = modelData[ , -1],
                              method = PiMethod
                              )
+  # Calculate fits for non-treated respondents
+  Pi_Fits[which(modelData$D != 1)] <-  (1 - Pi_Fits[which(modelData$D != 1)])
   
-  # Estimate weights for treated group
-  Weights <- modelData$p_W_Fits * Pi_Fits
-  # Estimate weights for control group
-  Weights[which(modelData$D != 1)] <- (modelData$p_W_Fits[which(modelData$D != 1)] * 
-                                             (1 - Pi_Fits[which(modelData$D != 1)])
-                                       )
+  # Calculate weights for all subjects
+  ATEWeights <- modelData$p_W_Fits * Pi_Fits
+
   return(list(ATTWeights = Pi_Fits,
-              ATEWeights = Weights
+              ATEWeights = ATEWeights
               )
          )
 }

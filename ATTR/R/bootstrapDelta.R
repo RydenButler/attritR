@@ -104,12 +104,12 @@ bootstrapDelta <- function(regressionFormula,
     ATTSEs <- apply(ATTMatrix, 1, sd)
     ATTMeans <- rowMeans(ATTMatrix)
     ATTMedians <- apply(ATTMatrix, 1, median)
-    ATTQuantiles <- apply(ATTMatrix, 1, function(x) quantile(x = x, probs = quantiles, na.rm = T))
+    ATTQuantiles <- apply(ATTMatrix, 1, function(x) quantile(x = x, probs = quantiles))
     
     ATESEs <- apply(ATEMatrix, 1, sd)
     ATEMeans <- rowMeans(ATEMatrix)
     ATEMedians <- apply(ATEMatrix, 1, median)
-    ATEQuantiles <- apply(ATEMatrix, 1, function(x) quantile(x = x, probs = quantiles, na.rm = T))
+    ATEQuantiles <- apply(ATEMatrix, 1, function(x) quantile(x = x, probs = quantiles))
     
     return(list(MeanATT = ATTMeans, 
                 MedianATT = ATTMedians, 
@@ -135,7 +135,8 @@ bootstrapDelta <- function(regressionFormula,
   # All efforts should be taken to have na.rm == F, as wanton removal of NAs can gloss over major errors
   # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
-  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles, na.rm = T))
+  # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
+  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
   # return list with mean, median, and standard error of estimated ATE for treatment and control
   return(list(MeanEst = Means, 
               MedianEst = Medians, 
