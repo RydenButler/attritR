@@ -1,4 +1,4 @@
-Package: estimateDelta
+Package: ATTR
 Type: Package
 Title: Estimating average treatment effect on the treated (or ATT)
 Version: 1.0
@@ -16,6 +16,7 @@ Imports:
   stats,
   gam
 Collate:
+  'probabilityFits.R'
   'calculateWeights.R'
   'estimateDelta.R'
   'bootstrapDelta.R'

@@ -42,22 +42,43 @@
 
 estimateDelta <- function(regressionFormula, 
                           instrumentFormula, 
-                          data, 
-                          weightMethod = 'glm') {
+                          data,
+                          p_W_Formula = R ~ .,
+                          p_W_Method = binomial(link = logit),
+                          PiFormula = D ~ .,
+                          PiMethod = binomial(link = logit)
+                          ) {
   
   # Extract model data given formula
   ModelData <- model.frame(regressionFormula, data, na.action = NULL)
   # Extract instrument data given formula
   InstrumentData <- model.frame(instrumentFormula, data, na.action = NULL)
   
+
   # Calculate weights; add this to data b/c lm() won't recognize the object otherwise
-  ModelData$IPWs <- calculateWeights(modelData = ModelData,
-                                     instrumentData = InstrumentData,
-                                     method = weightMethod)
+  WeightList <- calculateWeights(modelData = ModelData,
+                                 instrumentData = InstrumentData,
+                                 p_W_Formula = p_W_Formula,
+                                 p_W_Method = p_W_Method,
+                                 PiFormula = PiFormula,
+                                 PiMethod = PiMethod
+                                 )
+  ModelData$ATTWeights <- WeightList$ATTWeights
+  ModelData$ATEWeights <- WeightList$ATEWeights
+
+  # Estimate ATT
+  ATTModel <- lm(formula = regressionFormula,
+                 weights = ATTWeights,
+                 data = ModelData
+                 )
+  # Estimate ATE
+  ATEModel <- lm(formula = regressionFormula,
+                 weights = ATEWeights,
+                 data = ModelData
+                 )
   
-  # Estimate model
-  Model <- lm(formula = regressionFormula,
-              weights = IPWs,
-              data = ModelData)
-  return(Model$coefficients)
+  return(list(ATT = ATTModel,
+              ATE = ATEModel
+              )
+         )
 }

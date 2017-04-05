@@ -5,59 +5,89 @@ library(roxygen2)
 #### package.skeleton('estimateDelta')
 
 # Compile latest package and re-document
-Current <- as.package('estimateDelta')
+Current <- as.package('ATTR')
 load_all(Current)
 document(Current)
 
 # Create vector of treatment indicators
-D <- sample(c(0, 1), 100 , replace = T)
+Treatment <- sample(c(0, 1), 5000 , replace = T)
 # A dataframe of covariates for later use 
-X <- data.frame(Binary = sample(c(0, 1), 100, replace = T), 
-                Continuous = rnorm(100, 0, 3))
+Covariates <- data.frame(Binary = sample(x = c(0, 1), 
+                                         size = length(Treatment), 
+                                         replace = T), 
+                         Continuous = rnorm(n = length(Treatment), 
+                                            mean = 10, 
+                                            sd = 3))
 # Create vector of instruments
-Z <- data.frame(Z1 = sample(1:5, 100, replace = T, prob = c(0.3, 0.2, 0.2, 0.2, 0.1)))
+Instrument <- data.frame(Z1 = sample(x = 1:5, 
+                                     size = length(Treatment), 
+                                     replace = T, 
+                                     prob = c(0.3, 0.2, 0.2, 0.2, 0.1)))
 # Create vector of Y values, related to D and X
-Y <- 5*D + 1*X[,1] + 2*X[,2] + rnorm(100, 0, 3)
-# Create probabilistic attrtion vector
-Attrition <- rnorm(100, Z[,1], 5)
-# Make sure that this isn't totally deterministic for Z == 5
-order(Attrition, decreasing=TRUE)[1:15]
-which(Z == 5)
-# Change 10 largest attrition values in Y to NA
-Y[order(Attrition, decreasing=TRUE)[1:15]] <- NA
+Outcome <- 3*Treatment + 1*Covariates[,1] + 2*Covariates[,2]
+# Create probabilistic attrition vector
+Attrition <- sapply(1:length(Treatment), 
+                    function(x) rbinom(n = 1, 
+                                       size = 1, 
+                                       prob = (5*(Treatment[x] + 1) - Instrument[[1]][x])/10))
+Outcome[as.logical(Attrition)] <- NA
+# MAR missingness in X
+Covariates <- as.data.frame(lapply(Covariates, 
+                                   function(x) x[sample(x = c(TRUE,NA), 
+                                                        size = length(x),
+                                                        prob = c(0.95, 0.05),
+                                                        replace = TRUE)]))
 
 # Bind vectors together into single dataset
-NoXData <- data.frame(cbind(Y, D, Z))
-FullData <- data.frame(cbind(Y, D, X, Z))
+NoXData <- data.frame(cbind(Outcome, Treatment, Instrument))
+FullData <- data.frame(cbind(Outcome, Treatment, Covariates, Instrument))
 
-### Test on models without covariates
+lm(Outcome ~ Treatment + Binary + Continuous, data = FullData)
 
-# Test calculateWeights
-calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
-                 instrumentData = NoXData[, ncol(NoXData)])
-# Test GAM weights
-calculateWeights(modelData = NoXData[,-ncol(NoXData)], 
-                 instrumentData = NoXData[,ncol(NoXData)], 
-                 method = 'gam')
+### Check Proposition 4:
 
-# Test estimateDelta
-estimateDelta(Y ~ D, instrumentFormula = ~ Z1, data = NoXData)
+# weights
+Weights4 <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
+                             instrumentData = FullData[,ncol(FullData)])$ATTWeights
 
-# Test bootstrapDelta
-bootstrapDelta(Y ~ D, ~ Z1, NoXData)
+# delta
+Delta4 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous, 
+                        instrumentFormula = ~ Z1, 
+                        data = FullData)$ATT
 
-### Test on models including covariates
+# bootstrap
+Boot4 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
+                        ~ Z1, 
+                        FullData)
 
-# Test calculateWeights
-MyGLMWeights <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
-                                 instrumentData = FullData[, ncol(FullData)])
-# Test GAM weights
-MyGAMWeights <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
-                                 instrumentData = FullData[,ncol(FullData)], 
-                                 method = 'gam')
+### Check Proposition 5:
 
-# Test estimateDelta
-estimateDelta(Y ~ D + Binary + Continuous, instrumentFormula = ~ Z1, data = FullData)
+# weights
+Weights5 <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
+                             instrumentData = FullData[,ncol(FullData)])$ATEWeights
 
-# Test bootstrapDelta
-bootstrapDelta(Y ~ D + Binary + Continuous, ~ Z1, FullData)
+# delta
+Delta5 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous, 
+                       instrumentFormula = ~ Z1, 
+                       data = FullData)$ATE
+
+# bootstrap
+Boot5 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
+                            ~ Z1, 
+                            FullData)
+
+### Check Proposition 6:
+
+# weights
+Weights6 <- calculateWeights(modelData = NoXData[,-ncol(NoXData)],
+                             instrumentData = as.data.frame(NoXData[,ncol(NoXData)]))
+
+# delta
+Delta6 <- estimateDelta(Outcome ~ Treatment, 
+                        instrumentFormula = ~ Z1, 
+                        data = NoXData)
+
+# bootstrap
+Boot6 <- bootstrapDelta(Outcome ~ Treatment, 
+                        ~ Z1, 
+                        NoXData)

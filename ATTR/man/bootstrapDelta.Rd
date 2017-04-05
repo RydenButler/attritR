@@ -5,7 +5,9 @@
 \title{Estimating standard errors for ATEs given non-random attrition}
 \usage{
 bootstrapDelta(regressionFormula, instrumentFormula, data,
-  weightMethod = "glm", nBoots = 1000)
+  p_W_Formula = p_W_Formula, p_W_Method = p_W_Method,
+  PiFormula = PiFormula, PiMethod = PiMethod, nBoots = 1000,
+  quantiles = c(0.05, 0.95), effectType = "ATT")
 }
 \arguments{
 \item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to
@@ -23,20 +25,24 @@ and ... represents any other desired instrumental variables.}
 \item{data}{A data frame which contains all variables to be used in both 
 \code{regressionFormula} and \code{instrumentFormula}.}
 
-\item{weightMethod}{An optional string indicating the estimation method to be used for
-generating the weights.  The default method is generalized linear model ("glm").}
-
 \item{nBoots}{Numeric value defining the number of bootstrap samples; the default number
 of bootstrap replications is 1,000.}
+
+\item{weightMethod}{An optional string indicating the estimation method to be used for
+generating the weights.  The default method is generalized linear model ("glm").}
 }
 \value{
 A list of three vectors for mean, median, and standard errors of the ATE.
- \item{vector1}{A numeric vector of mean values of the ATE for treatment 
+ \item{MeanEst}{A numeric vector of mean values of the ATE for treatment 
  and control group.}
- \item{vector2}{A numeric vector of the median of the ATE for treatment 
+ \item{MedianEst}{A numeric vector of the median of the ATE for treatment 
  and control group.}
- \item{vector3}{A numeric vector of standard errors of the ATE for treatment 
+ \item{SE}{A numeric vector of standard errors of the ATE for treatment 
  and control group.}
+ \item{Quantiles}{A matrix containing estimates that correspond to the quantile (row)
+ and coefficient (column). By defualt it returns the 5\% and 95\% quantiles.}
+ \item{Matrix}{A matrix containing the bootstrapped coefficient estimates, where each
+ row corresponds to a covaraite, and each column corresponds to a bootstrap iteration.}
 }
 \description{
 \code{bootstrapDelta} estimates standard errors of the average treatment effect (ATE) 

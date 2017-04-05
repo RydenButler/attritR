@@ -4,8 +4,9 @@
 \alias{estimateDelta}
 \title{Estimating the ATE given non-random attrition}
 \usage{
-estimateDelta(regressionFormula, instrumentFormula, data,
-  weightMethod = "glm")
+estimateDelta(regressionFormula, instrumentFormula, data, p_W_Formula = R ~ .,
+  p_W_Method = binomial(link = logit), PiFormula = D ~ .,
+  PiMethod = binomial(link = logit))
 }
 \arguments{
 \item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to

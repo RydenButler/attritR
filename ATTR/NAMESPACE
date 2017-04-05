@@ -3,4 +3,4 @@
 export(bootstrapDelta)
 export(calculateWeights)
 export(estimateDelta)
-importFrom('gam',gam)
+import('gam')
