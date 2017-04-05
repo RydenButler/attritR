@@ -63,22 +63,22 @@ estimateDelta <- function(regressionFormula,
                                  PiFormula = PiFormula,
                                  PiMethod = PiMethod
                                  )
-  ModelData$ATTWeights <- WeightList$ATTWeights
-  ModelData$ATEWeights <- WeightList$ATEWeights
+  ModelData$RespondentWeights <- WeightList$RespondentWeights
+  ModelData$AllWeights <- WeightList$AllWeights
 
-  # Estimate ATT
-  ATTModel <- lm(formula = regressionFormula,
-                 weights = ATTWeights,
+  # Estimate Proposition 4:
+  RespondentModel <- lm(formula = regressionFormula,
+                 weights = RespondentWeights,
                  data = ModelData
                  )
-  # Estimate ATE
-  ATEModel <- lm(formula = regressionFormula,
-                 weights = ATEWeights,
+  # Estimate Proposition 5:
+  AllModel <- lm(formula = regressionFormula,
+                 weights = AllWeights,
                  data = ModelData
                  )
   
-  return(list(ATT = ATTModel,
-              ATE = ATEModel
+  return(list(RespondentDelta = RespondentModel,
+              AllDelta = AllModel
               )
          )
 }

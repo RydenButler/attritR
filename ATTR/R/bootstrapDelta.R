@@ -57,7 +57,7 @@ bootstrapDelta <- function(regressionFormula,
                            PiMethod = PiMethod,
                            nBoots = 1000,
                            quantiles = c(0.05, 0.95),
-                           effectType = 'ATT'
+                           effectType = 'Respondent'
                            ) {
   # Bootstrap data: random sampling of dataset with replacement
   BootsList <- lapply(X = 1:nBoots, 
@@ -66,61 +66,61 @@ bootstrapDelta <- function(regressionFormula,
                                                     replace = T), ]
                       )
 
-  if(effectType == 'ATT'){
+  if(effectType == 'Respondent'){
     CoefMatrix <- sapply(BootsList, 
                          function(x) estimateDelta(regressionFormula = regressionFormula,
                                                    instrumentFormula = instrumentFormula,
                                                    data = x
-                                                   )$ATT$coefficients
+                                                   )$RespondentDelta$coefficients
                          )
   } 
-  if(effectType == 'ATE'){
+  if(effectType == 'All'){
     CoefMatrix <- sapply(BootsList, 
                          function(x) estimateDelta(regressionFormula = regressionFormula,
                                                    instrumentFormula = instrumentFormula,
                                                    data = x
-                                                   )$ATE$coefficients
+                                                   )$AllDelta$coefficients
                          )
   } 
-  # Option to evaluate both the ATT and ATE
+
   # This is incredibly slow, and should not be used for testing purposes until this function is optimizes
-  # One way of streamlining this may be to bootstrap the ATE and ATT in different functions,
+  # One way of streamlining this may be to bootstrap the Respondent and All in different functions,
   # and have them both return in some umbrella function. This will remove the need for 
   # conditional statements, and perhaps will lead to more optimal memory allocation.
   if(effectType == 'Both'){
-    ATTMatrix <- sapply(BootsList,
+    RespondentMatrix <- sapply(BootsList,
                         function(x) estimateDelta(regressionFormula = regressionFormula,
                                                   instrumentFormula = instrumentFormula,
                                                   data = x
-                                                  )$ATT$coefficients
+                                                  )$RespondentDelta$coefficients
                         )
-    ATEMatrix <- sapply(BootsList,
+    AllMatrix <- sapply(BootsList,
                         function(x) estimateDelta(regressionFormula = regressionFormula,
                                                   instrumentFormula = instrumentFormula,
                                                   data = x
-                                                  )$ATE$coefficients
+                                                  )$AllDelta$coefficients
                         )
     
-    ATTSEs <- apply(ATTMatrix, 1, sd)
-    ATTMeans <- rowMeans(ATTMatrix)
-    ATTMedians <- apply(ATTMatrix, 1, median)
-    ATTQuantiles <- apply(ATTMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+    RespondentSEs <- apply(RespondentMatrix, 1, sd)
+    RespondentMeans <- rowMeans(RespondentMatrix)
+    RespondentMedians <- apply(RespondentMatrix, 1, median)
+    RespondentQuantiles <- apply(RespondentMatrix, 1, function(x) quantile(x = x, probs = quantiles))
     
-    ATESEs <- apply(ATEMatrix, 1, sd)
-    ATEMeans <- rowMeans(ATEMatrix)
-    ATEMedians <- apply(ATEMatrix, 1, median)
-    ATEQuantiles <- apply(ATEMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+    AllSEs <- apply(AllMatrix, 1, sd)
+    AllMeans <- rowMeans(AllMatrix)
+    AllMedians <- apply(AllMatrix, 1, median)
+    AllQuantiles <- apply(AllMatrix, 1, function(x) quantile(x = x, probs = quantiles))
     
-    return(list(MeanATT = ATTMeans, 
-                MedianATT = ATTMedians, 
-                SE_ATT = ATTSEs,
-                QuantilesATT = ATTQuantiles,
-                MatrixATT = ATTMatrix,
-                MeanATE = ATEMeans, 
-                MedianATE = ATEMedians, 
-                SE_ATE = ATESEs,
-                QuantilesATE = ATEQuantiles,
-                MatrixATE = ATEMatrix,
+    return(list(RespondentMean = RespondentMeans, 
+                RespondentMedian = RespondentMedians, 
+                RespondentSE = RespondentSEs,
+                RespondentQuantiles = RespondentQuantiles,
+                RespondentMatrix = RespondentMatrix,
+                AllMean = AllMeans, 
+                AllMedian = AllMedians, 
+                AllSE = AllSEs,
+                AllQuantiles = AllQuantiles,
+                AllMatrix = AllMatrix,
                 )
            )
   }
@@ -137,7 +137,7 @@ bootstrapDelta <- function(regressionFormula,
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
   # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
   Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
-  # return list with mean, median, and standard error of estimated ATE for treatment and control
+  # return list with mean, median, and standard error of estimated for treatment and control
   return(list(MeanEst = Means, 
               MedianEst = Medians, 
               SE = SEs,

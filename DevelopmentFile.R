@@ -48,35 +48,35 @@ lm(Outcome ~ Treatment + Binary + Continuous, data = FullData)
 
 # weights
 Weights4 <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
-                             instrumentData = FullData[,ncol(FullData)])$ATTWeights
+                             instrumentData = FullData[,ncol(FullData)])$RespondentWeights
 
 # delta
 Delta4 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous, 
                         instrumentFormula = ~ Z1, 
-                        data = FullData)$ATT
+                        data = FullData)$RespondentDelta
 
 # bootstrap
 Boot4 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
                         ~ Z1, 
                         FullData,
-                        effectType = 'ATT')
+                        effectType = 'Respondent')
 
 ### Check Proposition 5:
 
 # weights
 Weights5 <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
-                             instrumentData = FullData[,ncol(FullData)])$ATEWeights
+                             instrumentData = FullData[,ncol(FullData)])$AllWeights
 
 # delta
 Delta5 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous, 
                        instrumentFormula = ~ Z1, 
-                       data = FullData)$ATE
+                       data = FullData)$AllDelta
 
 # bootstrap
 Boot5 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
                         ~ Z1, 
                         FullData,
-                        effectType = 'ATE'
+                        effectType = 'All'
                         )
 
 ### Check Proposition 6:

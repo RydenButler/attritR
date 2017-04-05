@@ -70,10 +70,10 @@ calculateWeights <- function(modelData,
   Pi_Fits[which(modelData$D != 1)] <-  (1 - Pi_Fits[which(modelData$D != 1)])
   
   # Calculate weights for all subjects
-  ATEWeights <- modelData$p_W_Fits * Pi_Fits
+  AllWeights <- modelData$p_W_Fits * Pi_Fits
 
-  return(list(ATTWeights = Pi_Fits,
-              ATEWeights = ATEWeights
+  return(list(RespondentWeights = Pi_Fits,
+              AllWeights = AllWeights
               )
          )
 }
