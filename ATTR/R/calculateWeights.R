@@ -93,4 +93,35 @@ probabilityFits <- function(formula,
   return(Fits)
 }
 
+Proposition1 <- function(modelData,
+                         formula = R ~ .,
+                         method = binomial(link = logit)
+                         ) {
+  p <- probabilityFits(formula = formula,
+                       modelData = modelData,
+                       method = method)
+  p[modelData$R != 1] <- (1 - p(modelData$R != 1))
+  
+  return(p)
+}
+
+Proposition2 <- function(modelData,
+                         formula = D ~ .,
+                         method = binomial(link = logit)
+                         ) {
+  Pi <- probabilityFits(formula = formula,
+                        modelData = modelData,
+                        method = method)
+  Pi[modelData$D != 1] <- (1 - Pi[modelData$D != 1])
+  
+  return(Pi)
+}
+
+Proposition3 <- function(modelData, 
+                         formula = R ~ .,
+                         method = binomial(link = logit)
+                         ) {
+  
+}
+
 

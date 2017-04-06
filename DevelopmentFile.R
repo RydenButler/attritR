@@ -101,6 +101,7 @@ WeightsGAM <- calculateWeights(modelData = FullData[ , -ncol(FullData)],
                                instrumentData = FullData[ , ncol(FullData)],
                                p_W_Formula = R ~ D + Binary + s(Continuous))
 
+### Check top-level function
 wrapperFunction(Outcome ~ Treatment + Binary + Continuous,
                 ~ Z1,
                 FullData,
