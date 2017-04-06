@@ -16,7 +16,6 @@ Imports:
   stats,
   gam
 Collate:
-  'probabilityFits.R'
   'calculateWeights.R'
   'estimateDelta.R'
   'bootstrapDelta.R'
