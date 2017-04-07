@@ -63,17 +63,18 @@ estimateDelta <- function(regressionFormula,
                                  PiFormula = PiFormula,
                                  PiMethod = PiMethod
                                  )
-  ModelData$RespondentWeights <- WeightList$RespondentWeights
-  ModelData$AllWeights <- WeightList$AllWeights
+  ModelData <- ModelData[!is.na(ModelData[ , 1]), ]
+  ModelData$Pi <- WeightList$Pi
+  ModelData$pWxPi <- WeightList$pWxPi
 
   # Estimate Proposition 4:
   RespondentModel <- lm(formula = regressionFormula,
-                 weights = RespondentWeights,
+                 weights = Pi,
                  data = ModelData
                  )
   # Estimate Proposition 5:
   AllModel <- lm(formula = regressionFormula,
-                 weights = AllWeights,
+                 weights = pWxPi,
                  data = ModelData
                  )
   

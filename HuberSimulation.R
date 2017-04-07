@@ -26,10 +26,12 @@ SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 BootSim <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         ~ Instrument, 
                         SimData)
+BootSim$MeanEst
 BootSim2 <- bootstrapDelta(Y ~ Treatment + Covariate, 
                           ~ Instrument, 
                           SimData,
                           effectType = 'All')
+BootSim2$MeanEst
 lm(Y ~ Treatment + Covariate)
 
 # Check unobservables

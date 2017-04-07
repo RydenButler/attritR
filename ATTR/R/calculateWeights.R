@@ -54,25 +54,27 @@ calculateWeights <- function(modelData,
   ### This modelData must be structured as columns of Y, D, X, Z
   ### Otherwise the following calculations are incorrect
   
-  # Regress R on D + X + Z; calculate fitted values
+  # Regress R on X + Z; calculate fitted values
   modelData$p_W_Fits <- probabilityFits(formula = p_W_Formula,
-                                        modelData = data.frame(modelData, instrumentData),
+                                        # Since default formula is R ~ ., we remove D
+                                        modelData = data.frame(modelData[ , -2], instrumentData),
                                         method = p_W_Method
                                         )
   # Regress D on X + Z
   Pi_Fits <- probabilityFits(formula = PiFormula,
-                             # Since default formula is D ~ ., we remove R
-                             modelData = modelData[ , -1],
+                             # Since default formula is D ~ ., we remove R, while conditioning on R = 1
+                             modelData = modelData[modelData$R == 1 , -1],
                              method = PiMethod
                              )
-  # Calculate fits for non-treated respondents
-  Pi_Fits[which(modelData$D != 1)] <-  (1 - Pi_Fits[which(modelData$D != 1)])
+  # Treatment propensity scores
+  Pi_Fits[modelData[modelData$R == 1, ]$D != 1] <-  (1 - Pi_Fits[modelData[modelData$R == 1, ]$D != 1])
   
-  # Calculate weights for all subjects
-  AllWeights <- modelData$p_W_Fits * Pi_Fits
+  # Product of response propensity scores and treatment propensity scores
+  AllWeights <- modelData[modelData$R == 1, ]$p_W_Fits * Pi_Fits
 
-  return(list(RespondentWeights = Pi_Fits,
-              AllWeights = AllWeights
+  return(list(pW = modelData$p_W_Fits,
+              Pi = Pi_Fits,
+              pWxPi = AllWeights
               )
          )
 }
