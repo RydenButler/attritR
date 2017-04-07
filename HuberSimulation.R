@@ -22,6 +22,13 @@ unY[!unR] <- NA
 
 SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 
+calculateWeights(SimData[,1:3],
+                 SimData[,4])
+estimateDelta(Y ~ Treatment + Covariate,
+              ~ Instrument,
+              SimData)
+
+
 # Check observables
 BootSim <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         ~ Instrument, 

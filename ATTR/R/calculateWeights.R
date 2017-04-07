@@ -60,6 +60,7 @@ calculateWeights <- function(modelData,
                                         modelData = data.frame(modelData[ , -2], instrumentData),
                                         method = p_W_Method
                                         )
+  modelData[modelData$D != 1, ]$p_W_Fits <- (1 - modelData[modelData$D != 1, ]$p_W_Fits)
   # Regress D on X + Z
   Pi_Fits <- probabilityFits(formula = PiFormula,
                              # Since default formula is D ~ ., we remove R, while conditioning on R = 1
@@ -123,7 +124,12 @@ Proposition3 <- function(modelData,
                          formula = R ~ .,
                          method = binomial(link = logit)
                          ) {
-  
+  retunr(Proposition1(modelData,
+                      formula,
+                      method)*Proposition2(modelData,
+                                           formula,
+                                           method)
+         )
 }
 
 
