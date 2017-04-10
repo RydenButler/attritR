@@ -124,7 +124,7 @@ Proposition3 <- function(modelData,
                          formula = R ~ .,
                          method = binomial(link = logit)
                          ) {
-  retunr(Proposition1(modelData,
+  return(Proposition1(modelData,
                       formula,
                       method)*Proposition2(modelData,
                                            formula,
