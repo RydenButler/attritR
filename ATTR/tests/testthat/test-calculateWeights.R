@@ -23,8 +23,7 @@ Y <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + U
 R <- 1*Treatment + 1*Covariate + 0*Instrument + V > 0
 Y[!R] <- NA
 
-SimData <- data.frame(Y,Treatment,Covariate)
-SimInstrument <- data.frame(Instrument)
+SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 
 ## Functions for fitting and working with generalized additive model are required.
 library(gam)
@@ -32,43 +31,45 @@ library(gam)
 ## tests:
 test_that("calculateWeights produce values within a right range", {
   # does the function produce values within a right range?
-    expect_true(1 %in% findInterval(calculateWeights(modelData = SimData,
-                                  instrumentData = SimInstrument)$RespondentWeights, 
-                             c(0,1)))
-    expect_true(1 %in% findInterval(calculateWeights(modelData = SimData,
-                                  instrumentData = SimInstrument)$AllWeights, 
-                             c(0.01, 0.99)))
+    expect_true(1 %in% findInterval(calculateWeights(modelData = SimData[,1:3],
+                                  instrumentData = SimData[,4])$pW, 
+                             c(0.00001, 0.99999)))
+    expect_true(1 %in% findInterval(calculateWeights(modelData = SimData[,1:3],
+                                  instrumentData = SimData[,4])$Pi, 
+                             c(0.00001, 0.99999)))
+    expect_true(1 %in% findInterval(calculateWeights(modelData = SimData[,1:3],
+                                                     instrumentData = SimData[,4])$pWxPi, 
+                                    c(0.000001, 0.999999)))
 })
 
 test_that("calculateWeights produce an output of right class", {
   # does the function produce an output of right class?
-  expect_is(calculateWeights(SimData, SimInstrument), "list")
-  expect_is(calculateWeights(SimData, SimInstrument)$RespondentWeights, "numeric")
-  expect_is(calculateWeights(SimData, SimInstrument)$AllWeights, "numeric")
+  expect_is(calculateWeights(SimData[,1:3], SimData[,4]), "list")
+  expect_is(calculateWeights(SimData[,1:3], SimData[,4])$pW, "numeric")
+  expect_is(calculateWeights(SimData[,1:3], SimData[,4])$Pi, "numeric")
+  expect_is(calculateWeights(SimData[,1:3], SimData[,4])$pWxPi, "numeric")  
 })
 
 test_that("calculateWeights have right number of rows/columns", {
   # does the function have right number of columns?
-  expect_equal(length(calculateWeights(SimData, SimInstrument)), 
-               expected = 2)
-  expect_equal(length(calculateWeights(SimData, SimInstrument)$RespondentWeights), 
+  expect_equal(length(calculateWeights(SimData[,1:3], SimData[,4])), 
+               expected = 3)
+  expect_equal(length(calculateWeights(SimData[,1:3], SimData[,4])$pW), 
                expected = nrow(SimData))
-  expect_equal(length(calculateWeights(SimData, SimInstrument)$AllWeights), 
-               expected = nrow(SimData))
+  expect_equal(length(calculateWeights(SimData[,1:3], SimData[,4])$Pi), 
+               expected = length(na.omit(SimData[,1])))
+  expect_equal(length(calculateWeights(SimData[,1:3], SimData[,4])$pWxPi), 
+               expected = length(na.omit(SimData[,1])))  
 })
 
 test_that("calculateWeights detect error", {
   # does the function detect error when it should?
-  expect_error(calculateWeights(modelData = data.frame(Instrument), 
-                                instrumentData = SimData))
-  expect_error(calculateWeights(modelData = Instrument, 
-                                instrumentData = SimData))
-  expect_error(calculateWeights(modelData = SimData[1:(2/nrow(SimData)), ], 
-                                instrumentData = SimInstrument))
-  expect_error(calculateWeights(modelData = data.frame(Y),
-                                instrumentData = SimInstrument))
-# expect_error(calculateWeights(modelData = data.frame(Y, Treatment),
-#                                instrumentData = SimInstrument)) ### Check: did not throw an error.
-  expect_error(calculateWeights(modelData = data.frame(Y, Covariates),
-                                instrumentData = SimInstrument))
+  # case 1: incorrect number of subscripts on matrix
+  expect_error(calculateWeights(SimData[,1], SimData[,4])) # modelData = only Y
+#  expect_error(calculateWeights(SimData[,1:2], SimData[,4])) # modelData = (Y, Treatment) 
+                                                              ### Check: (Y, Treatment) did not throw an error 
+  expect_error(calculateWeights(SimData[,c(1,3)], SimData[,4])) # modelData = (Y, Covariates)
+  expect_error(calculateWeights(SimData[,4], SimData[,1:3])) # modelData = instrument, InstumentData = model
+  # case 2: number of rows does not match
+  expect_error(calculateWeights(SimData[1:(2/length(SimData)),1:3], SimData[,4]))  
 })
