@@ -66,8 +66,6 @@ test_that("calculateWeights detect error", {
   # does the function detect error when it should?
   # case 1: incorrect number of subscripts on matrix
   expect_error(calculateWeights(SimData[,1], SimData[,4])) # modelData = only Y
-#  expect_error(calculateWeights(SimData[,1:2], SimData[,4])) # modelData = (Y, Treatment) 
-                                                              ### Check: (Y, Treatment) did not throw an error 
   expect_error(calculateWeights(SimData[,c(1,3)], SimData[,4])) # modelData = (Y, Covariates)
   expect_error(calculateWeights(SimData[,4], SimData[,1:3])) # modelData = instrument, InstumentData = model
   # case 2: number of rows does not match
