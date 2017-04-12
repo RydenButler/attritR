@@ -61,6 +61,11 @@ Boot4 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous,
                         FullData,
                         effectType = 'Respondent')
 
+Boot4 <- bootstrapDelta_P(Outcome ~ Treatment + Binary + Continuous, 
+                        ~ Z1, 
+                        FullData,
+                        effectType = 'Respondent')
+
 ### Check Proposition 5:
 
 # weights

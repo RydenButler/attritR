@@ -48,7 +48,7 @@
 #' @rdname bootstrapDelta
 #' @export
 
-bootstrapDelta <- function(regressionFormula, 
+bootstrapDelta_P <- function(regressionFormula, 
                            instrumentFormula, 
                            data,
                            p_W_Formula = R ~ .,
@@ -60,13 +60,13 @@ bootstrapDelta <- function(regressionFormula,
                            effectType = 'Respondent'
                            ) {
   # Identifying and setting number of cores
-  num_cores <- detectCores() - 1
+  #num_cores <- detectCores() - 1
   # Setting cluster of cores
-  cl <- makeCluster(num_cores)
+  #cl <- makeCluster(num_cores)
   # for Windows computers, you need to explicitly identify which objects from the environment will
   # be used in your parallel functions
-  clusterExport(cl, c("data", "regressionFormula", "instrumentFormula"))
-  setDefaultCluster(cl)
+  #clusterExport(cl, c(data, regressionFormula, instrumentFormula))
+  #setDefaultCluster(cl)
   
   # Bootstrap data: random sampling of dataset with replacement
   BootsList <- parLapply(X = 1:nBoots, 
@@ -77,9 +77,9 @@ bootstrapDelta <- function(regressionFormula,
   
   # Need to redefine exports for each new/updated export on Windows; if not loaded, need to load in
   # subsidiary functions in package and "gam" library
-  clusterExport(cl, c("data", "regressionFormula", "instrumentFormula", "BootsList", "estimateDelta",
-                      "calculateWeights", "probabilityFits", "gam"))
-  setDefaultCluster(cl)
+  #clusterExport(cl, c("data", "regressionFormula", "instrumentFormula", "BootsList", "estimateDelta",
+  #                    "calculateWeights", "probabilityFits", "gam"))
+  #setDefaultCluster(cl)
   
   if(effectType == 'Respondent'){
     CoefMatrix <- parSapply(cl=cl, BootsList, 
@@ -141,10 +141,10 @@ bootstrapDelta <- function(regressionFormula,
   }
   
   # need to load "stats" library
-  clusterExport(cl, c("data", "regressionFormula", "instrumentFormula", "BootsList", "estimateDelta",
-                      "calculateWeights", "probabilityFits", "gam", "CoefMatrix","sd",
-                      "quantiles", "quantile"))
-  setDefaultCluster(cl)
+  #clusterExport(cl, c("data", "regressionFormula", "instrumentFormula", "BootsList", "estimateDelta",
+  #                    "calculateWeights", "probabilityFits", "gam", "CoefMatrix","sd",
+  #                    "quantiles", "quantile"))
+  #setDefaultCluster(cl)
   
   # Calculate results: mean, median, and standard errors, based on bootstrapped replications
   SEs <- parApply(cl=cl, X=CoefMatrix, MARGIN=1, FUN=function(x) sd(x))
