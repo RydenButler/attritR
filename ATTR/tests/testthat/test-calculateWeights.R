@@ -32,7 +32,7 @@ names(TestData)[1:2] <- c('R', 'D')
 # Regress R on X + Z; calculate fitted values
 TestData$p_W_Fits <- predict(object = gam(formula = R ~ ., # Calculate model and then fitted value
                                           family = binomial(link = logit),
-                                          data = TestData[ ,-2], # Since default formula is R ~ ., we remove D
+                                          data = TestData,
                                           maxit = 1000),
                              newdata = TestData,
                              type = 'response')
@@ -41,15 +41,15 @@ TestData[TestData$D != 1, ]$p_W_Fits <- (1 - TestData)[TestData$D != 1, ]$p_W_Fi
 # Regress D on X + Z
 Test.Pi_Fits <- predict(object = gam(formula = D ~ ., # Calculate model and then fitted value
                                      family = binomial(link = logit),
-                                     data = TestData[TestData$R == 1 , -1], # Since default formula is D ~ ., we remove R
+                                     data = TestData[, -1], # Since default formula is D ~ ., we remove R
                                                             # conditioning on R=1
                                      maxit = 1000),
-                        newdata = TestData[TestData$R == 1 , -1],
+                        newdata = TestData[, -1],
                         type = 'response')
-Test.Pi_Fits[TestData[TestData$R == 1, ]$D != 1] <- (1 - TestData$Pi_Fits)[TestData[TestData$R == 1, ]$D != 1]
+Test.Pi_Fits[TestData$D != 1] <- (1 - Test.Pi_Fits[TestData$D != 1])
 
 # Product of response propensity scores and treatment propensity scores
-Test.AllWeights <- TestData[TestData$R == 1, ]$p_W_Fits * Test.Pi_Fits
+Test.AllWeights <- TestData$p_W_Fits * Test.Pi_Fits
 
 # Final output:
 Test.WeightList <- list(pW = TestData$p_W_Fits, 
@@ -67,7 +67,7 @@ test_that("test that calculateWeights generates correct length of vectors", {
   expect_equal(length(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$Pi),
     expected = length(Test.WeightList$Pi))
   expect_equal(length(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pWxPi),
-    expected = length(Test.WeightList$pWxPi))
+    expected = length(Test.WeightList$pW))
 })
 
 test_that("calculateWeights produce right values", {
