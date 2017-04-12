@@ -52,7 +52,7 @@ Test.Pi_Fits[TestData[TestData$R == 1, ]$D != 1] <- (1 - TestData$Pi_Fits)[TestD
 Test.AllWeights <- TestData[TestData$R == 1, ]$p_W_Fits * Test.Pi_Fits
 
 # Final output:
-Test.weights <- list(pW = TestData$p_W_Fits, 
+Test.WeightList <- list(pW = TestData$p_W_Fits, 
                      Pi = Test.Pi_Fits,
                      pWxPi = Test.AllWeights)
  
@@ -64,7 +64,7 @@ Test.weights <- list(pW = TestData$p_W_Fits,
 test_that("calculateWeights produce right values", {
   # does the function produce right values?
   expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4]),
-               expected = Test.weights)
+               expected = Test.WeightList)
 })
 
 test_that("calculateWeights produce values within a right range", {
