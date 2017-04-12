@@ -1,21 +1,41 @@
 context("estimateDelta")
 
-test.delta <- estimateDelta(regressionFormula = Y ~ Treatment + Covariate,
-              instrumentFormula = ~ Instrument,
-              data = SimData)
+
+## Estimating delta without using the estimateDelta function:
+
+# Extract model data given formula
+TestData.full <- SimData
+TestData.full <- model.frame(Y ~ Treatment + Covariate, TestData.full, na.action = NULL)
+# Extract instrument data given formula
+TestInstrumentData <- model.frame(~ Instrument, TestData.full, na.action = NULL)
+  
+# Calculate weights; add this to data b/c lm() won't recognize the object otherwise
+Test.WeightList <- calculateWeights(modelData = TestData.full, 
+                                    instrumentData = TestInstrumentData)
+TestData.full <- TestData.full[!is.na(TestData.full[ , 1]), ]
+TestData.full$Pi <- Test.WeightList$Pi
+TestData.full$pWxPi <- Test.WeightList$pWxPi
+  
+# Estimate Proposition 4:
+Test.RespondentModel <- lm(formula = Y ~ Treatment + Covariate,
+                           weights = Pi,
+                           data = TestData.full)
+# Estimate Proposition 5:
+Test.AllModel <- lm(formula = Y ~ Treatment + Covariate,
+                    weights = pWxPi,
+                    data = TestData.full)
+# Final output of estimateDelta:  
+Test.Delta <- list(RespondentDelta = Test.RespondentModel,
+                   AllDelta = Test.AllModel)
+
 
 ## tests:
 test_that("estimateDelta produce right values", {
   # does the function produce right values?
-  expect_equal(coef(estimateDelta(regressionFormula = Y ~ Treatment + Covariate,
-                                  instrumentFormula = ~ Instrument,
-                                  data = SimData)$RespondentDelta),
-               expected = 
-  )
-  expect_equal(coef(estimateDelta(regressionFormula = Y ~ Treatment + Covariate,
-                                  instrumentFormula = ~ Instrument,
-                                  data = SimData)$AllDelta),
-               expected = 
+  expect_equal(estimateDelta(regressionFormula = Y ~ Treatment + Covariate,
+                             instrumentFormula = ~ Instrument,
+                             data = SimData),
+               expected = Test.Delta
   )
 })
 
