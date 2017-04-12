@@ -1,12 +1,8 @@
 context("calculateWeights")
-context("probabilityFits")
-
-# context("Proposition1")
-# context("Proposition2")
-# context("Proposition3")
 
 
-## Create simulation data, SimData:
+
+### Create simulation data, SimData:
 library(MASS)
 set.seed(12345)
 
@@ -28,7 +24,49 @@ SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 ## Functions for fitting and working with generalized additive model are required.
 library(gam)
 
-## tests:
+## calculate weights without using the function:
+TestData <- SimData
+TestData[ ,1] <- as.numeric(!is.na(.subset2(TestData, 1))) # Recode Y as R
+names(TestData)[1:2] <- c('R', 'D')
+# pW: response propensity scores
+# Regress R on X + Z; calculate fitted values
+TestData$p_W_Fits <- predict(object = gam(formula = R ~ ., # Calculate model and then fitted value
+                                          family = binomial(link = logit),
+                                          data = TestData[ ,-2], # Since default formula is R ~ ., we remove D
+                                          maxit = 1000),
+                             newdata = TestData,
+                             type = 'response')
+TestData[TestData$D != 1, ]$p_W_Fits <- (1 - TestData)[TestData$D != 1, ]$p_W_Fits
+# Pi: treatment propensity scores
+# Regress D on X + Z
+Test.Pi_Fits <- predict(object = gam(formula = D ~ ., # Calculate model and then fitted value
+                                     family = binomial(link = logit),
+                                     data = TestData[TestData$R == 1 , -1], # Since default formula is D ~ ., we remove R
+                                                            # conditioning on R=1
+                                     maxit = 1000),
+                        newdata = TestData[TestData$R == 1 , -1],
+                        type = 'response')
+Test.Pi_Fits[TestData[TestData$R == 1, ]$D != 1] <- (1 - TestData$Pi_Fits)[TestData[TestData$R == 1, ]$D != 1]
+
+# Product of response propensity scores and treatment propensity scores
+Test.AllWeights <- TestData[TestData$R == 1, ]$p_W_Fits * Test.Pi_Fits
+
+# Final output:
+Test.weights <- list(pW = TestData$p_W_Fits, 
+                     Pi = Test.Pi_Fits,
+                     pWxPi = Test.AllWeights)
+ 
+
+test1 <- calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])
+
+### Tests:        
+
+test_that("calculateWeights produce right values", {
+  # does the function produce right values?
+  expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4]),
+               expected = Test.weights)
+})
+
 test_that("calculateWeights produce values within a right range", {
   # does the function produce values within a right range?
     expect_true(1 %in% findInterval(calculateWeights(modelData = SimData[,1:3],
