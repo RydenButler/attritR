@@ -57,7 +57,7 @@ Test.weights <- list(pW = TestData$p_W_Fits,
                      pWxPi = Test.AllWeights)
  
 
-test1 <- calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])
+
 
 ### Tests:        
 
