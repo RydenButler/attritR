@@ -5,6 +5,9 @@ library(roxygen2)
 #### package.skeleton('estimateDelta')
 
 # Compile latest package and re-document
+setwd("~/Documents/Team-Non-Random-Attrition/")
+
+
 Current <- as.package('ATTR')
 load_all(Current)
 document(Current)
