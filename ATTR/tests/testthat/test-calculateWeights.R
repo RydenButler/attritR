@@ -63,8 +63,12 @@ Test.WeightList <- list(pW = TestData$p_W_Fits,
 
 test_that("calculateWeights produce right values", {
   # does the function produce right values?
-  expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4]),
-               expected = Test.WeightList)
+  expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pW,
+    expected = Test.weights$pW)
+  expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$Pi,
+    expected = Test.weights$Pi)
+  expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pWxPi,
+    expected = Test.weights$pWxPi)
 })
 
 test_that("calculateWeights produce values within a right range", {
