@@ -63,7 +63,7 @@ estimateDelta <- function(regressionFormula,
                                  PiFormula = PiFormula,
                                  PiMethod = PiMethod
                                  )
-  ModelData <- ModelData[!is.na(ModelData[ , 1]), ]
+
   ModelData$Pi <- WeightList$Pi
   ModelData$pWxPi <- WeightList$pWxPi
 

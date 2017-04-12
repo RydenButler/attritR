@@ -56,22 +56,24 @@ calculateWeights <- function(modelData,
   
   # Regress R on X + Z; calculate fitted values
   modelData$p_W_Fits <- probabilityFits(formula = p_W_Formula,
-                                        # Since default formula is R ~ ., we remove D
-                                        modelData = data.frame(modelData[ , -2], instrumentData),
+                                        # Since default formula is R ~ .
+                                        modelData = data.frame(modelData, instrumentData),
                                         method = p_W_Method
                                         )
+  # Calculate inverse probabilities p(D = 0, X, Z)
   modelData[modelData$D != 1, ]$p_W_Fits <- (1 - modelData)[modelData$D != 1, ]$p_W_Fits
+  
   # Regress D on X + Z
   Pi_Fits <- probabilityFits(formula = PiFormula,
                              # Since default formula is D ~ ., we remove R, while conditioning on R = 1
-                             modelData = modelData[modelData$R == 1 , -1],
+                             modelData = modelData[ , -1],
                              method = PiMethod
                              )
   # Treatment propensity scores
-  Pi_Fits[modelData[modelData$R == 1, ]$D != 1] <-  (1 - Pi_Fits)[modelData[modelData$R == 1, ]$D != 1]
+  Pi_Fits[modelData$D != 1] <-  (1 - Pi_Fits[modelData$D != 1])
   
   # Product of response propensity scores and treatment propensity scores
-  AllWeights <- modelData[modelData$R == 1, ]$p_W_Fits * Pi_Fits
+  AllWeights <- modelData$p_W_Fits * Pi_Fits
 
   return(list(pW = modelData$p_W_Fits,
               Pi = Pi_Fits,
