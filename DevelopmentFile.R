@@ -1,68 +1,79 @@
 library(devtools)
 library(roxygen2)
+library(MASS)
 
 # DO NOT RUN THE FOLLOWING LINE
 #### package.skeleton('estimateDelta')
 
-# Compile latest package and re-document
-setwd("~/Documents/Team-Non-Random-Attrition/")
-
-
+# Compile latest package and re-documents
 Current <- as.package('ATTR')
 load_all(Current)
 document(Current)
 
-# Create vector of treatment indicators
-Treatment <- sample(c(0, 1), 100 , replace = T)
-# A dataframe of covariates for later use 
-Covariates <- data.frame(Binary = sample(x = c(0, 1), 
-                                         size = length(Treatment), 
-                                         replace = T), 
-                         Continuous = rnorm(n = length(Treatment), 
-                                            mean = 10, 
-                                            sd = 3))
-# Create vector of instruments
-Instrument <- data.frame(Z1 = sample(x = 1:5, 
-                                     size = length(Treatment), 
-                                     replace = T, 
-                                     prob = c(0.3, 0.2, 0.2, 0.2, 0.1)))
-# Create vector of Y values, related to D and X
-Outcome <- 3*Treatment + 1*Covariates[,1] + 2*Covariates[,2]
-# Create probabilistic attrition vector
-Attrition <- sapply(1:length(Treatment), 
-                    function(x) rbinom(n = 1, 
-                                       size = 1, 
-                                       prob = (5*(Treatment[x] + 1) - Instrument[[1]][x])/10))
-Outcome[as.logical(Attrition)] <- NA
-# MAR missingness in X
-Covariates <- as.data.frame(lapply(Covariates, 
-                                   function(x) x[sample(x = c(TRUE,NA), 
-                                                        size = length(x),
-                                                        prob = c(0.95, 0.05),
-                                                        replace = TRUE)]))
+# Simulate Data
+N <- 1000
+Covariate <- runif(n = N, min = -1, max = 1)
+Instrument <- runif(n = N, min = -1, max = 2)
+Treatment <- rbinom(n = N, size = 1, prob = 0.5)
+# For attrition on observables
+UV <- mvrnorm(n = N, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
+U <- UV[ , 1]
+V <- UV[ , 2]
 
-# Bind vectors together into single dataset
-NoXData <- data.frame(cbind(Outcome, Treatment, Instrument))
-FullData <- data.frame(cbind(Outcome, Treatment, Covariates, Instrument))
+YTreatment <- 1 + 1*Covariate + 0.25*1*Covariate + U
+YControl <- 0 + 1*Covariate + 0.25*0*Covariate + U
 
-lm(Outcome ~ Treatment + Binary + Continuous, data = FullData)
+Y <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + U
+
+R <- 1*Treatment + 1*Covariate + 0.5*Instrument + V > 0
+
+Y[!R] <- NA
+
+ObsData <- data.frame(Y, Treatment, Covariate, Instrument)
+
+# For attrition on unobservables
+unUV <- mvrnorm(n = N, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
+unU <- unUV[ , 1]
+unV <- unUV[ , 2]
+
+unYTreatment <- 1 + 1*Covariate + 0.25*1*Covariate + unU
+unYControl <- 0 + 1*Covariate + 0.25*0*Covariate + unU
+
+unY <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + unU
+
+unR <- 0.5*Treatment + 0.5*Covariate + 1*Instrument + unV > 0
+
+unY[!unR] <- NA
+
+UnObsData <- data.frame(unY, Treatment, Covariate, Instrument)
+
+# Treatment Effects
+ATE <- mean(YTreatment) - mean(YControl)
+ATT <- mean(Y[R & Treatment]) - mean(Y[R & !Treatment])
+unATE <- mean(unYTreatment) - mean(unYControl)
+unATT <- mean(unY[unR & Treatment]) - mean(unY[unR & !Treatment])
+
+# OLS estimates of the ATT
+lm(Y ~ Treatment + Covariate)
+lm(unY ~ Treatment + Covariate)
 
 ### Check Proposition 4:
 
 # weights
-Weights4 <- calculateWeights(modelData = FullData[,-ncol(FullData)], 
-                             instrumentData = FullData[,ncol(FullData)])$RespondentWeights
+Weights4 <- calculateWeights(modelData = ObsData[,1:3], 
+                             instrumentData = ObsData[ , 4])
 
 # delta
-Delta4 <- estimateDelta(Outcome ~ Treatment + Binary + Continuous, 
-                        instrumentFormula = ~ Z1, 
-                        data = FullData)$RespondentDelta
+Delta4 <- estimateDelta(Y ~ Treatment + Covariate, 
+                        instrumentFormula = ~ Instrument, 
+                        data = ObsData)
 
 # bootstrap
-Boot4 <- bootstrapDelta(Outcome ~ Treatment + Binary + Continuous, 
-                        ~ Z1, 
-                        FullData,
+Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate, 
+                        instrumentFormula = ~ Instrument, 
+                        data = ObsData,
                         effectType = 'Respondent')
+Boot4$MeanEst
 
 Boot4 <- bootstrapDelta_P(Outcome ~ Treatment + Binary + Continuous, 
                         ~ Z1, 
