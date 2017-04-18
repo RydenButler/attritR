@@ -30,7 +30,8 @@ TestData[ ,1] <- as.numeric(!is.na(.subset2(TestData, 1))) # Recode Y as R
 names(TestData)[1:2] <- c('R', 'D')
 # pW: response propensity scores
 # Regress R on X + Z; calculate fitted values
-TestData$p_W_Fits <- predict(object = gam(formula = R ~ ., # Calculate model and then fitted value
+# gam == glm coefficients?
+TestData$p_W_Fits <- predict(object = glm(formula = R ~ Treatment + Covariate + Instrument, # Calculate model and then fitted value
                                           family = binomial(link = logit),
                                           data = TestData,
                                           maxit = 1000),
@@ -39,12 +40,12 @@ TestData$p_W_Fits <- predict(object = gam(formula = R ~ ., # Calculate model and
 TestData[TestData$D != 1, ]$p_W_Fits <- (1 - TestData)[TestData$D != 1, ]$p_W_Fits
 # Pi: treatment propensity scores
 # Regress D on X + Z
-Test.Pi_Fits <- predict(object = gam(formula = D ~ ., # Calculate model and then fitted value
+Test.Pi_Fits <- predict(object = glm(formula = D ~ Covariate + p_W_Fits, # Calculate model and then fitted value
                                      family = binomial(link = logit),
-                                     data = TestData[, -1], # Since default formula is D ~ ., we remove R
+                                     data = TestData, # Since default formula is D ~ ., we remove R
                                                             # conditioning on R=1
                                      maxit = 1000),
-                        newdata = TestData[, -1],
+                        newdata = TestData,
                         type = 'response')
 Test.Pi_Fits[TestData$D != 1] <- (1 - Test.Pi_Fits[TestData$D != 1])
 
