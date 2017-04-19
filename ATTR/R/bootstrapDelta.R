@@ -1,6 +1,6 @@
 #' Estimating standard errors for ATEs given non-random attrition
 #'
-#' \code{bootstrapDelta} estimates standard errors of the average treatment effect (ATE) 
+#' \code{bootstrapDeltaP} estimates standard errors of the average treatment effect (ATE) in parallel
 #' under conditions of non-random attrition.
 #' 
 #' @param regressionFormula An object of class \code{formula} (or one that can be coerced to
@@ -46,6 +46,7 @@
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
 #' @rdname bootstrapDelta
+#' @import 'parallel'
 #' @export
 
 bootstrapDelta <- function(regressionFormula, 
@@ -57,59 +58,63 @@ bootstrapDelta <- function(regressionFormula,
                            PiMethod = binomial(link = logit),
                            nBoots = 1000,
                            quantiles = c(0.05, 0.95),
-                           effectType = 'Respondent'
-                           ) {
+                           effectType = 'Respondent',
+                           nCores = 1
+) {
+  
+  # Make cluster
+  BootsCluster <- makeCluster(nCores, type = 'FORK')
   # Bootstrap data: random sampling of dataset with replacement
-  BootsList <- lapply(X = 1:nBoots, 
-                      FUN = function(x) data[sample(x = nrow(data),
-                                                    size = nrow(data),
-                                                    replace = T), ]
-                      )
-
+  BootsList <- parLapply(BootsCluster, X = 1:nBoots, 
+                         fun = function(x) data[sample(x = nrow(data),
+                                                       size = nrow(data),
+                                                       replace = T), ]
+  )
+  
   if(effectType == 'Respondent'){
-    CoefMatrix <- sapply(BootsList, 
-                         function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                   instrumentFormula = instrumentFormula,
-                                                   data = x
-                                                   )$RespondentDelta$coefficients
-                         )
+    CoefMatrix <- parSapply(BootsCluster, BootsList, 
+                            FUN = function(x) estimateDelta(regressionFormula = regressionFormula,
+                                                            instrumentFormula = instrumentFormula,
+                                                            data = x
+                            )$RespondentDelta$coefficients
+    )
   } 
   if(effectType == 'All'){
-    CoefMatrix <- sapply(BootsList, 
-                         function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                   instrumentFormula = instrumentFormula,
-                                                   data = x
-                                                   )$AllDelta$coefficients
-                         )
+    CoefMatrix <- parSapply(BootsCluster, BootsList, 
+                            function(x) estimateDelta(regressionFormula = regressionFormula,
+                                                      instrumentFormula = instrumentFormula,
+                                                      data = x
+                            )$AllDelta$coefficients
+    )
   } 
-
+  
   # This is incredibly slow, and should not be used for testing purposes until this function is optimizes
   # One way of streamlining this may be to bootstrap the Respondent and All in different functions,
   # and have them both return in some umbrella function. This will remove the need for 
   # conditional statements, and perhaps will lead to more optimal memory allocation.
   if(effectType == 'Both'){
-    RespondentMatrix <- sapply(BootsList,
-                        function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                  instrumentFormula = instrumentFormula,
-                                                  data = x
-                                                  )$RespondentDelta$coefficients
-                        )
-    AllMatrix <- sapply(BootsList,
-                        function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                  instrumentFormula = instrumentFormula,
-                                                  data = x
-                                                  )$AllDelta$coefficients
-                        )
+    RespondentMatrix <- parSapply(BootsCluster, BootsList,
+                                  function(x) estimateDelta(regressionFormula = regressionFormula,
+                                                            instrumentFormula = instrumentFormula,
+                                                            data = x
+                                  )$RespondentDelta$coefficients
+    )
+    AllMatrix <- parSapply(BootsCluster, BootsList,
+                           function(x) estimateDelta(regressionFormula = regressionFormula,
+                                                     instrumentFormula = instrumentFormula,
+                                                     data = x
+                           )$AllDelta$coefficients
+    )
     
-    RespondentSEs <- apply(RespondentMatrix, 1, sd)
+    RespondentSEs <- parApply(BootsCluster, RespondentMatrix, 1, sd)
     RespondentMeans <- rowMeans(RespondentMatrix)
-    RespondentMedians <- apply(RespondentMatrix, 1, median)
-    RespondentQuantiles <- apply(RespondentMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+    RespondentMedians <- parApply(BootsCluster, RespondentMatrix, 1, median)
+    RespondentQuantiles <- parApply(BootsCluster, RespondentMatrix, 1, function(x) quantile(x = x, probs = quantiles))
     
-    AllSEs <- apply(AllMatrix, 1, sd)
+    AllSEs <- parApply(BootsCluster, AllMatrix, 1, sd)
     AllMeans <- rowMeans(AllMatrix)
-    AllMedians <- apply(AllMatrix, 1, median)
-    AllQuantiles <- apply(AllMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+    AllMedians <- parApply(BootsCluster, AllMatrix, 1, median)
+    AllQuantiles <- parApply(BootsCluster, AllMatrix, 1, function(x) quantile(x = x, probs = quantiles))
     
     return(list(RespondentMean = RespondentMeans, 
                 RespondentMedian = RespondentMedians, 
@@ -121,14 +126,14 @@ bootstrapDelta <- function(regressionFormula,
                 AllSE = AllSEs,
                 AllQuantiles = AllQuantiles,
                 AllMatrix = AllMatrix,
-                )
-           )
+    )
+    )
   }
   
   # Calculate results: mean, median, and standard errors, based on bootstrapped replications
-  SEs <- apply(CoefMatrix, 1, sd)
+  SEs <- parApply(BootsCluster, X=CoefMatrix, MARGIN=1, FUN=function(x) sd(x))
   Means <- rowMeans(CoefMatrix)
-  Medians <- apply(CoefMatrix, 1, median)
+  Medians <- parApply(BootsCluster, X=CoefMatrix, MARGIN=1, FUN=function(x) median(x))
   # Note that the bootstrapping results in some NA coefficient estimates (colinearity? too much missingness?)
   # As a result, na.rm is required here for the quantiles (though strangely, not for the other functions)
   # This is unnecessary with larger sample sizes, and may disappear with additional noise
@@ -136,13 +141,15 @@ bootstrapDelta <- function(regressionFormula,
   # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
   # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
-  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+  Quantiles <- parApply(BootsCluster, CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
   # return list with mean, median, and standard error of estimated for treatment and control
   return(list(MeanEst = Means, 
               MedianEst = Medians, 
               SE = SEs,
               Quantiles = Quantiles,
               Matrix = CoefMatrix
-              )
-         )
-  }
+  )
+  )
+  # Stopping the cluster
+  stopCluster(BootsCluster)
+}

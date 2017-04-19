@@ -36,12 +36,9 @@ ObsData <- data.frame(Y, Treatment, Covariate, Instrument)
 # Treatment Effects
 ATE <- mean(YTreatment) - mean(YControl)
 ATT <- mean(Y[R & Treatment]) - mean(Y[R & !Treatment])
-unATE <- mean(unYTreatment) - mean(unYControl)
-unATT <- mean(unY[unR & Treatment]) - mean(unY[unR & !Treatment])
 
 # OLS estimates among respondents
 lm(Y ~ Treatment + Covariate)
-lm(unY ~ Treatment + Covariate)
 
 ### Check Proposition 4:
 
@@ -60,11 +57,6 @@ Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate,
                         data = ObsData,
                         effectType = 'All')
 Boot4$MeanEst
-
-Boot4 <- bootstrapDelta_P(Outcome ~ Treatment + Binary + Continuous, 
-                        ~ Z1, 
-                        FullData,
-                        effectType = 'Respondent')
 
 ### Check Proposition 5:
 
