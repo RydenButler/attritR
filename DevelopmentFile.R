@@ -12,6 +12,8 @@ document(Current)
 
 # Simulate Data
 N <- 1000
+TreatmentEffect <- 2
+InteractionEffect <- -5
 Covariate <- runif(n = N, min = -1, max = 1)
 Instrument <- runif(n = N, min = -1, max = 2)
 Treatment <- rbinom(n = N, size = 1, prob = 0.5)
@@ -20,32 +22,16 @@ UV <- mvrnorm(n = N, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
 U <- UV[ , 1]
 V <- UV[ , 2]
 
-YTreatment <- 1 + 1*Covariate + 0.25*1*Covariate + U
-YControl <- 0 + 1*Covariate + 0.25*0*Covariate + U
+YTreatment <- TreatmentEffect + 1*Covariate + InteractionEffect*Treatment*Covariate + U
+YControl <-  1*Covariate + U
 
-Y <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + U
+Y <- TreatmentEffect*Treatment + 1*Covariate + InteractionEffect*Treatment*Covariate + U
 
-R <- 1*Treatment + 1*Covariate + 0.5*Instrument + V > 0
+R <- TreatmentEffect*Treatment + 1*Covariate + 0.5*Instrument + V > 0
 
 Y[!R] <- NA
 
 ObsData <- data.frame(Y, Treatment, Covariate, Instrument)
-
-# For attrition on unobservables
-unUV <- mvrnorm(n = N, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
-unU <- unUV[ , 1]
-unV <- unUV[ , 2]
-
-unYTreatment <- 1 + 1*Covariate + 0.25*1*Covariate + unU
-unYControl <- 0 + 1*Covariate + 0.25*0*Covariate + unU
-
-unY <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + unU
-
-unR <- 0.5*Treatment + 0.5*Covariate + 1*Instrument + unV > 0
-
-unY[!unR] <- NA
-
-UnObsData <- data.frame(unY, Treatment, Covariate, Instrument)
 
 # Treatment Effects
 ATE <- mean(YTreatment) - mean(YControl)
@@ -53,7 +39,7 @@ ATT <- mean(Y[R & Treatment]) - mean(Y[R & !Treatment])
 unATE <- mean(unYTreatment) - mean(unYControl)
 unATT <- mean(unY[unR & Treatment]) - mean(unY[unR & !Treatment])
 
-# OLS estimates of the ATT
+# OLS estimates among respondents
 lm(Y ~ Treatment + Covariate)
 lm(unY ~ Treatment + Covariate)
 
@@ -72,7 +58,7 @@ Delta4 <- estimateDelta(Y ~ Treatment + Covariate,
 Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         instrumentFormula = ~ Instrument, 
                         data = ObsData,
-                        effectType = 'Respondent')
+                        effectType = 'All')
 Boot4$MeanEst
 
 Boot4 <- bootstrapDelta_P(Outcome ~ Treatment + Binary + Continuous, 
