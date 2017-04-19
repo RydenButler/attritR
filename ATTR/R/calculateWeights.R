@@ -92,7 +92,7 @@ probabilityFits <- function(formula,
                data = modelData,
                maxit = 1000)
   # Calculate fitted values
-  Fits <- predict.gam(object = Model,
+  Fits <- predict(object = Model,
                   newdata = modelData,
                   type = 'response')
   return(Fits)

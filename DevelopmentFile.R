@@ -55,7 +55,8 @@ Delta4 <- estimateDelta(Y ~ Treatment + Covariate,
 Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         instrumentFormula = ~ Instrument, 
                         data = ObsData,
-                        effectType = 'All')
+                        effectType = 'All',
+                        nCores = 4)
 Boot4$MeanEst
 
 ### Check Proposition 5:

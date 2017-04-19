@@ -63,7 +63,22 @@ bootstrapDelta <- function(regressionFormula,
 ) {
   
   # Make cluster
-  BootsCluster <- makeCluster(nCores, type = 'FORK')
+  BootsCluster <- makeCluster(nCores)
+  clusterExport(BootsCluster, c('regressionFormula', 
+                                'instrumentFormula', 
+                                'data',
+                                'p_W_Formula',
+                                'p_W_Method',
+                                'PiFormula',
+                                'PiMethod',
+                                'nBoots',
+                                'quantiles',
+                                'effectType',
+                                'estimateDelta',
+                                'calculateWeights',
+                                'probabilityFits',
+                                'gam'), 
+                envir = environment())
   # Bootstrap data: random sampling of dataset with replacement
   BootsList <- parLapply(BootsCluster, X = 1:nBoots, 
                          fun = function(x) data[sample(x = nrow(data),
@@ -142,6 +157,8 @@ bootstrapDelta <- function(regressionFormula,
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
   # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
   Quantiles <- parApply(BootsCluster, CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+  # Stopping the cluster
+  stopCluster(BootsCluster)
   # return list with mean, median, and standard error of estimated for treatment and control
   return(list(MeanEst = Means, 
               MedianEst = Medians, 
@@ -150,6 +167,4 @@ bootstrapDelta <- function(regressionFormula,
               Matrix = CoefMatrix
   )
   )
-  # Stopping the cluster
-  stopCluster(BootsCluster)
 }
