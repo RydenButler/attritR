@@ -11,34 +11,69 @@ load_all(Current)
 document(Current)
 
 # Simulate Data
-N <- 1000
-TreatmentEffect <- 2
-InteractionEffect <- -5
-Covariate <- runif(n = N, min = -1, max = 1)
-Instrument <- runif(n = N, min = -1, max = 2)
-Treatment <- rbinom(n = N, size = 1, prob = 0.5)
-# For attrition on observables
-UV <- mvrnorm(n = N, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
-U <- UV[ , 1]
-V <- UV[ , 2]
+simulateData <- function(treatmentBounds = c(-2,2), interactionEffect = -5, N = 1000){
+  Sims <- lapply(seq(treatmentBounds[1], treatmentBounds[2], 0.1), function(D) {
+    Covariate <- runif(n = N, min = -1, max = 1)
+    Instrument <- runif(n = N, min = -1, max = 2)
+    Treatment <- rbinom(n = N, size = 1, prob = 0.5)
+    # For attrition on observables
+    UV <- mvrnorm(n = N, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
+    U <- UV[ , 1]
+    V <- UV[ , 2]
+    # Counterfactual treatment effects
+    YTreatment <- D + 1*Covariate + interactionEffect*Treatment*Covariate + U
+    YControl <-  1*Covariate + U
+    # Realized treatment effects and attrition
+    Y <- D*Treatment + 1*Covariate + interactionEffect*Treatment*Covariate + U
+    R <- D*Treatment + 1*Covariate + 0.5*Instrument + V > 0
+    Y[!R] <- NA
+    # Combines realized data
+    SimData <- data.frame(Y, Treatment, Covariate, Instrument)
+    # Treatment Effects
+    ATE <- mean(YTreatment) - mean(YControl)
+    ATR <- mean(Y[R & Treatment]) - mean(Y[R & !Treatment]) 
+    return(list(ATE = ATE, ATR = ATR, SimData = SimData))
+    }
+    )
+  ATE <- unlist(lapply(Sims, function(sim) sim$ATE))
+  ATR <- unlist(lapply(Sims, function(sim) sim$ATR))
+  SimData <- lapply(Sims, function(sim) sim$SimData)
+  return(list(ATE = ATE, ATR = ATR, SimData = SimData))
+}
 
-YTreatment <- TreatmentEffect + 1*Covariate + InteractionEffect*Treatment*Covariate + U
-YControl <-  1*Covariate + U
+plotEstimates <- function(simulatedData) {
+  Estimates <- lapply(simulatedData$SimData, function(CurrentData){
+    # OLS estimate among respondents
+   OLS <-  summary(lm(Y ~ Treatment + Covariate, data = CurrentData))$coefficients[2,1:2]
+   # bootstrapDelta estimates
+   OurModel <- bootstrapDelta(Y ~ Treatment + Covariate,
+                          instrumentFormula = ~ Instrument,
+                          data = CurrentData,
+                          effectType = 'All',
+                         nBoots = 10)
+   Est <- OurModel$MeanEst[2]
+   SE <- OurModel$SE[2]
+   return(list(OLSCoef = OLS[1], OLSSE = OLS[2], 
+               ATECoef = Est, ATESE = SE))
+   }
+  )
+  OLS <- unlist(lapply(Estimates, function(est) est$OLSCoef))
+  OLSSE <- unlist(lapply(Estimates, function(est) est$OLSSE))
+  Model <- unlist(lapply(Estimates, function(est) est$ATECoef))
+  ModelSE <- unlist(lapply(Estimates, function(est) est$ATESE))
+  
+  plot(x = 1:length(OLS), y = OLS-simulatedData$ATE, type = 'p', ylim = c(-5,5), pch = 19)
+  points(x = 1:length(OLS), y = OLS-simulatedData$ATE+OLSSE*1.96, pch = '-')
+  points(x = 1:length(OLS), y = OLS-simulatedData$ATE-OLSSE*1.96, pch = '-')
+  points(x = 1:length(OLS), y = Model-simulatedData$ATE, pch = 'X')
+  points(x = 1:length(OLS), y = Model-simulatedData$ATE+ModelSE*1.96, pch = 'x')
+  points(x = 1:length(OLS), y = Model-simulatedData$ATE-ModelSE*1.96, pch = 'x')
+  abline(h=0)
+}
 
-Y <- TreatmentEffect*Treatment + 1*Covariate + InteractionEffect*Treatment*Covariate + U
+# Run simulation
+plotEstimates(simulateData())
 
-R <- TreatmentEffect*Treatment + 1*Covariate + 0.5*Instrument + V > 0
-
-Y[!R] <- NA
-
-ObsData <- data.frame(Y, Treatment, Covariate, Instrument)
-
-# Treatment Effects
-ATE <- mean(YTreatment) - mean(YControl)
-ATT <- mean(Y[R & Treatment]) - mean(Y[R & !Treatment])
-
-# OLS estimates among respondents
-lm(Y ~ Treatment + Covariate)
 
 ### Check Proposition 4:
 
@@ -54,7 +89,7 @@ Delta4 <- estimateDelta(Y ~ Treatment + Covariate,
 # bootstrap
 Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         instrumentFormula = ~ Instrument, 
-                        data = ObsData,
+                        data = test$SimData[[1]],
                         effectType = 'All',
                         nCores = 4)
 Boot4$MeanEst
