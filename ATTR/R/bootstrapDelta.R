@@ -146,9 +146,9 @@ bootstrapDelta <- function(regressionFormula,
   }
   
   # Calculate results: mean, median, and standard errors, based on bootstrapped replications
-  SEs <- parApply(BootsCluster, X=CoefMatrix, MARGIN=1, FUN=function(x) sd(x))
+  SEs <- apply(X=CoefMatrix, MARGIN=1, FUN=function(x) sd(x))
   Means <- rowMeans(CoefMatrix)
-  Medians <- parApply(BootsCluster, X=CoefMatrix, MARGIN=1, FUN=function(x) median(x))
+  Medians <- apply(X=CoefMatrix, MARGIN=1, FUN=function(x) median(x))
   # Note that the bootstrapping results in some NA coefficient estimates (colinearity? too much missingness?)
   # As a result, na.rm is required here for the quantiles (though strangely, not for the other functions)
   # This is unnecessary with larger sample sizes, and may disappear with additional noise
@@ -156,7 +156,7 @@ bootstrapDelta <- function(regressionFormula,
   # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
   # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
-  Quantiles <- parApply(BootsCluster, CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
   # Stopping the cluster
   stopCluster(BootsCluster)
   # return list with mean, median, and standard error of estimated for treatment and control

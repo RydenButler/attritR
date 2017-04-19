@@ -59,6 +59,27 @@ Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate,
                         nCores = 4)
 Boot4$MeanEst
 
+# difference of ~ 5 seconds per iteration: median 14.4;19.4
+microbenchmark(bootstrapDelta(Y ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = ObsData,
+                                       effectType = 'All',
+                                       nCores = 4),
+               bootstrapDelta(Y ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = ObsData,
+                                       effectType = 'All',
+                                       nCores = 1),
+               times = 1)
+
+test <- lineprof(bootstrapDelta(Y ~ Treatment + Covariate, 
+                        instrumentFormula = ~ Instrument, 
+                        data = ObsData,
+                        effectType = 'All',
+                        nCores = 4))
+shine(test)
+
+
 ### Check Proposition 5:
 
 # weights
