@@ -1,6 +1,6 @@
-Package: ATTR
+Package: attritR
 Type: Package
-Title: Estimating average treatment effect on the treated (or ATT)
+Title: Estimating average treatment effect under attrition on observables
 Version: 1.0
 Date: 2017-03-28
 Author: Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
@@ -20,5 +20,5 @@ Collate:
   'calculateWeights.R'
   'estimateDelta.R'
   'bootstrapDelta.R'
-  'Top_Level.R'
+  'ATE.R'
 

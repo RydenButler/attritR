@@ -6,7 +6,7 @@ library(MASS)
 #### package.skeleton('estimateDelta')
 
 # Compile latest package and re-documents
-Current <- as.package('ATTR')
+Current <- as.package('attritR')
 load_all(Current)
 document(Current)
 
@@ -62,12 +62,14 @@ plotEstimates <- function(simulatedData) {
   Model <- unlist(lapply(Estimates, function(est) est$ATECoef))
   ModelSE <- unlist(lapply(Estimates, function(est) est$ATESE))
   
-  plot(x = 1:length(OLS), y = OLS-simulatedData$ATE, type = 'p', ylim = c(-5,5), pch = 19)
-  points(x = 1:length(OLS), y = OLS-simulatedData$ATE+OLSSE*1.96, pch = '-')
-  points(x = 1:length(OLS), y = OLS-simulatedData$ATE-OLSSE*1.96, pch = '-')
-  points(x = 1:length(OLS), y = Model-simulatedData$ATE, pch = 'X')
-  points(x = 1:length(OLS), y = Model-simulatedData$ATE+ModelSE*1.96, pch = 'x')
-  points(x = 1:length(OLS), y = Model-simulatedData$ATE-ModelSE*1.96, pch = 'x')
+  plot(x = seq(-2,2,.1), y = OLS-simulatedData$ATE, type = 'p', 
+       ylim = c(-5,5), pch = 19, cex = 0.5, las = 1,
+       xlab = 'Treatment Effect', ylab = 'Estimate - ATE')
+  #points(x = 1:length(OLS), y = OLS-simulatedData$ATE+OLSSE*1.96, pch = '-')
+  #points(x = 1:length(OLS), y = OLS-simulatedData$ATE-OLSSE*1.96, pch = '-')
+  points(x = seq(-2,2,.1), y = Model-simulatedData$ATE, pch = 'X', cex = 0.5)
+  #points(x = 1:length(OLS), y = Model-simulatedData$ATE+ModelSE*1.96, pch = 'x')
+  #points(x = 1:length(OLS), y = Model-simulatedData$ATE-ModelSE*1.96, pch = 'x')
   abline(h=0)
 }
 
@@ -76,6 +78,7 @@ plotEstimates(simulateData())
 
 
 ### Check Proposition 4:
+ObsData <- simulateData()$SimData[[1]]
 
 # weights
 Weights4 <- calculateWeights(modelData = ObsData[,1:3], 
@@ -89,10 +92,16 @@ Delta4 <- estimateDelta(Y ~ Treatment + Covariate,
 # bootstrap
 Boot4 <- bootstrapDelta(Y ~ Treatment + Covariate, 
                         instrumentFormula = ~ Instrument, 
-                        data = test$SimData[[1]],
+                        data = ObsData,
                         effectType = 'All',
                         nCores = 4)
 Boot4$MeanEst
+
+ATE(Y ~ Treatment + Covariate, 
+        instrumentFormula = ~ Instrument,
+        data = ObsData,
+        effectType = 'All',
+        nCores = 4)
 
 # difference of ~ 5 seconds per iteration: median 14.4;19.4
 microbenchmark(bootstrapDelta(Y ~ Treatment + Covariate, 

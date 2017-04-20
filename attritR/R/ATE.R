@@ -1,4 +1,4 @@
-wrapperFunction <- function(regressionFormula, 
+ATE <- function(regressionFormula, 
                             instrumentFormula, 
                             data,
                             p_W_Formula = R ~ .,
@@ -7,7 +7,8 @@ wrapperFunction <- function(regressionFormula,
                             PiMethod = binomial(link = logit),
                             nBoots = 1000,
                             quantiles = c(0.05, 0.95),
-                            effectType = 'Respondent'
+                            effectType = 'All',
+                            nCores = 1
                             ) {
   
   Results <- bootstrapDelta(regressionFormula, 
@@ -21,7 +22,7 @@ wrapperFunction <- function(regressionFormula,
                             quantiles = quantiles,
                             effectType = effectType
                             )
-  Output <- cat('--- ATE Results from ', nBoots, 'Bootstraps ---\n',
+  Output <- cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
                 'Mean  ', Results$MeanEst[2], '\n',
                 'Median', Results$MedianEst[2], '\n',
                 'SE    ', Results$SE[2])
