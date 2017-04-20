@@ -54,7 +54,7 @@ calculateWeights <- function(modelData,
   ### This modelData must be structured as columns of Y, D, X, Z
   ### Otherwise the following calculations are incorrect
   
-  # Regress R on X + Z; calculate fitted values
+  # Regress R on D + X + Z; calculate fitted values
   modelData$p_W_Fits <- probabilityFits(formula = p_W_Formula,
                                         # Since default formula is R ~ .
                                         modelData = data.frame(modelData, instrumentData),
@@ -63,7 +63,7 @@ calculateWeights <- function(modelData,
   # Calculate inverse probabilities p(D = 0, X, Z)
   modelData[modelData$D != 1, ]$p_W_Fits <- (1 - modelData)[modelData$D != 1, ]$p_W_Fits
   
-  # Regress D on X + Z
+  # Regress D on X + p(W)
   Pi_Fits <- probabilityFits(formula = PiFormula,
                              # Since default formula is D ~ ., we remove R, while conditioning on R = 1
                              modelData = modelData[ , -1],
@@ -86,13 +86,11 @@ probabilityFits <- function(formula,
                             modelData,
                             method = binomial(link = logit)
 ) {
-  # Calculate model
-  Model <- gam(formula = formula, 
-               family = method,
-               data = modelData,
-               maxit = 1000)
-  # Calculate fitted values
-  Fits <- predict(object = Model,
+  # Predict probabilities for fitted model
+  Fits <- predict(object = gam(formula = formula, 
+                               family = method,
+                               data = modelData,
+                               maxit = 1000),
                   newdata = modelData,
                   type = 'response')
   return(Fits)
@@ -106,7 +104,6 @@ Proposition1 <- function(modelData,
                        modelData = modelData,
                        method = method)
   p[modelData$R != 1] <- (1 - p(modelData$R != 1))
-  
   return(p)
 }
 
@@ -115,17 +112,17 @@ Proposition2 <- function(modelData,
                          method = binomial(link = logit)
                          ) {
   Pi <- probabilityFits(formula = formula,
-                        modelData = modelData,
+                        modelData = modelData[modelData$R == 1,],
                         method = method)
   Pi[modelData$D != 1] <- (1 - Pi[modelData$D != 1])
   
   return(Pi)
 }
 
-Proposition3 <- function(modelData, 
-                         formula = R ~ .,
-                         method = binomial(link = logit)
-                         ) {
+Proposition3 <- function(modelData,
+                         formulaP1 = R ~ .,
+                         formulaP2 = D ~ .,
+                         method = binomial(link = logit)) {
   return(Proposition1(modelData,
                       formula,
                       method)*Proposition2(modelData,
