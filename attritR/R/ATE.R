@@ -22,10 +22,11 @@ ATE <- function(regressionFormula,
                             quantiles = quantiles,
                             effectType = effectType
                             )
-  Output <- cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
+  print(cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
                 'Mean  ', Results$MeanEst[2], '\n',
                 'Median', Results$MedianEst[2], '\n',
-                'SE    ', Results$SE[2])
+                'SE    ', Results$SE[2]))
+  invisible(Results)
 }
   
   

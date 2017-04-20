@@ -69,12 +69,12 @@ estimateDelta <- function(regressionFormula,
 
   # Estimate Proposition 4:
   RespondentModel <- lm(formula = regressionFormula,
-                 weights = Pi,
+                 weights = 1/Pi,
                  data = ModelData
                  )
   # Estimate Proposition 5:
   AllModel <- lm(formula = regressionFormula,
-                 weights = pWxPi,
+                 weights = 1/pWxPi,
                  data = ModelData
                  )
   

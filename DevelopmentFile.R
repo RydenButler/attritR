@@ -11,7 +11,7 @@ load_all(Current)
 document(Current)
 
 # Simulate Data
-simulateData <- function(treatmentBounds = c(-2,2), interactionEffect = -5, N = 1000){
+simulateData <- function(treatmentBounds = c(-2,2), interactionEffect = 5, N = 1000){
   Sims <- lapply(seq(treatmentBounds[1], treatmentBounds[2], 0.1), function(D) {
     Covariate <- runif(n = N, min = -1, max = 1)
     Instrument <- runif(n = N, min = -1, max = 2)
@@ -49,7 +49,7 @@ plotEstimates <- function(simulatedData) {
    OurModel <- bootstrapDelta(Y ~ Treatment + Covariate,
                           instrumentFormula = ~ Instrument,
                           data = CurrentData,
-                          effectType = 'All',
+                          effectType = 'Respondent',
                          nBoots = 10)
    Est <- OurModel$MeanEst[2]
    SE <- OurModel$SE[2]
@@ -78,7 +78,7 @@ plotEstimates(simulateData())
 
 
 ### Check Proposition 4:
-ObsData <- simulateData()$SimData[[1]]
+ObsData <- simulateData(treatmentBounds = c(-10,10))$SimData[[1]]
 
 # weights
 Weights4 <- calculateWeights(modelData = ObsData[,1:3], 

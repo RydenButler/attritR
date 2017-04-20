@@ -156,7 +156,7 @@ bootstrapDelta <- function(regressionFormula,
   # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
   # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
-  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles))
+  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles, na.rm=T))
   # Stopping the cluster
   stopCluster(BootsCluster)
   # return list with mean, median, and standard error of estimated for treatment and control
