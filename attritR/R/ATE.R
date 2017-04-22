@@ -22,11 +22,29 @@ ATE <- function(regressionFormula,
                             quantiles = quantiles,
                             effectType = effectType
                             )
-  print(cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
-                'Mean  ', Results$MeanEst[2], '\n',
-                'Median', Results$MedianEst[2], '\n',
-                'SE    ', Results$SE[2]))
-  invisible(Results)
+  # Printing summary result tables
+  if(effectType == "All"){
+      print(cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
+        'Coefficients:\n',
+        '         ', 'Mean       ','Median  ','SE      ','lower 95%','upper 95%\n',
+        'All      ', Results$MeanEst[2],Results$MedianEst[2], Results$SE[2],Results$MeanEst[2]-(1.96*Results$SE[2]), Results$MeanEst[2]+(1.96*Results$SE[2])))
+    invisible(Results)
+  } 
+  if(effectType == "Respondent"){
+    print(cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
+      'Coefficients:\n',
+      '          ', 'Mean       ','Median  ','SE      ','lower 95%','upper 95%\n',
+      'Respondent', Results$MeanEst[2],Results$MedianEst[2], Results$SE[2],Results$MeanEst[2]-(1.96*Results$SE[2]), Results$MeanEst[2]+(1.96*Results$SE[2])))
+    invisible(Results)
+  }
+  if(effectType == "Both"){  # this does not work yet.
+    print(cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
+      'Coefficients:\n',
+      '          ', 'Mean       ','Median  ','SE      ','\n',
+      'Respondent', Results$RespondentMean[2],Results$RespondentMedian[2], Results$RespondentSE[2],'\n',
+      'All       ', Results$AllMean[2], Results$AllMedian[2], Results$AllSE[2]))
+      invisible(Results)
+  }
 }
   
   
