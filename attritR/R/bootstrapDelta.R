@@ -58,7 +58,7 @@ bootstrapDelta <- function(regressionFormula,
                            PiMethod = binomial(link = logit),
                            nBoots = 1000,
                            quantiles = c(0.05, 0.95),
-                           effectType = 'Respondent',
+                           effectType = 'Population',
                            nCores = 1
 ) {
   
@@ -86,69 +86,29 @@ bootstrapDelta <- function(regressionFormula,
                                                        replace = T), ]
   )
   
-  if(effectType == 'Respondent'){
-    CoefMatrix <- parSapply(BootsCluster, BootsList, 
+  Estimates <- list()
+  
+  if(effectType == 'Respondent' | effectType == 'Both'){
+    Estimates$Resp <- parSapply(BootsCluster, BootsList, 
                             FUN = function(x) estimateDelta(regressionFormula = regressionFormula,
                                                             instrumentFormula = instrumentFormula,
                                                             data = x
                             )$RespondentDelta$coefficients
     )
   } 
-  if(effectType == 'All'){
-    CoefMatrix <- parSapply(BootsCluster, BootsList, 
+  if(effectType == 'Population' | effectType == 'Both'){
+    Estimates$Pop <- parSapply(BootsCluster, BootsList, 
                             function(x) estimateDelta(regressionFormula = regressionFormula,
                                                       instrumentFormula = instrumentFormula,
                                                       data = x
-                            )$AllDelta$coefficients
+                            )$PopulationDelta$coefficients
     )
   } 
   
-  # This is incredibly slow, and should not be used for testing purposes until this function is optimizes
-  # One way of streamlining this may be to bootstrap the Respondent and All in different functions,
-  # and have them both return in some umbrella function. This will remove the need for 
-  # conditional statements, and perhaps will lead to more optimal memory allocation.
-  if(effectType == 'Both'){
-    RespondentMatrix <- parSapply(BootsCluster, BootsList,
-                                  function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                            instrumentFormula = instrumentFormula,
-                                                            data = x
-                                  )$RespondentDelta$coefficients
-    )
-    AllMatrix <- parSapply(BootsCluster, BootsList,
-                           function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                     instrumentFormula = instrumentFormula,
-                                                     data = x
-                           )$AllDelta$coefficients
-    )
-    
-    RespondentSEs <- parApply(BootsCluster, RespondentMatrix, 1, sd)
-    RespondentMeans <- rowMeans(RespondentMatrix)
-    RespondentMedians <- parApply(BootsCluster, RespondentMatrix, 1, median)
-    RespondentQuantiles <- parApply(BootsCluster, RespondentMatrix, 1, function(x) quantile(x = x, probs = quantiles))
-    
-    AllSEs <- parApply(BootsCluster, AllMatrix, 1, sd)
-    AllMeans <- rowMeans(AllMatrix)
-    AllMedians <- parApply(BootsCluster, AllMatrix, 1, median)
-    AllQuantiles <- parApply(BootsCluster, AllMatrix, 1, function(x) quantile(x = x, probs = quantiles))
-    
-    return(list(RespondentMean = RespondentMeans, 
-                RespondentMedian = RespondentMedians, 
-                RespondentSE = RespondentSEs,
-                RespondentQuantiles = RespondentQuantiles,
-                RespondentMatrix = RespondentMatrix,
-                AllMean = AllMeans, 
-                AllMedian = AllMedians, 
-                AllSE = AllSEs,
-                AllQuantiles = AllQuantiles,
-                AllMatrix = AllMatrix,
-    )
-    )
-  }
-  
   # Calculate results: mean, median, and standard errors, based on bootstrapped replications
-  SEs <- apply(X=CoefMatrix, MARGIN=1, FUN=function(x) sd(x))
-  Means <- rowMeans(CoefMatrix)
-  Medians <- apply(X=CoefMatrix, MARGIN=1, FUN=function(x) median(x))
+  SEs <- lapply(Estimates, function(x) apply(x, 1, sd))
+  Means <- lapply(Estimates, rowMeans)
+  Medians <- lapply(Estimates, function(x) apply(x, 1, median))
   # Note that the bootstrapping results in some NA coefficient estimates (colinearity? too much missingness?)
   # As a result, na.rm is required here for the quantiles (though strangely, not for the other functions)
   # This is unnecessary with larger sample sizes, and may disappear with additional noise
@@ -156,7 +116,7 @@ bootstrapDelta <- function(regressionFormula,
   # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
   # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
   # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
-  Quantiles <- apply(CoefMatrix, 1, function(x) quantile(x = x, probs = quantiles, na.rm=T))
+  Quantiles <- lapply(Estimates, function(x) apply(x, 1, function(y) quantile(y, quantiles, na.rm=T)))
   # Stopping the cluster
   stopCluster(BootsCluster)
   # return list with mean, median, and standard error of estimated for treatment and control
@@ -164,7 +124,7 @@ bootstrapDelta <- function(regressionFormula,
               MedianEst = Medians, 
               SE = SEs,
               Quantiles = Quantiles,
-              Matrix = CoefMatrix
+              Matrix = Estimates
   )
   )
 }
