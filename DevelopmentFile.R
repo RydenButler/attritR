@@ -74,7 +74,7 @@ Boot4$MeanEst
 ATE(Y ~ D + X, 
         instrumentFormula = ~ Z,
         data = ObsData,
-        effectType = 'All',
+        effectType = 'Both',
         nCores = 4)
 
 # difference of ~ 5 seconds per iteration: median 14.4;19.4
