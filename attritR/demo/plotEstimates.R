@@ -5,7 +5,7 @@ simulateData <- function(N = 1000,
                          treatmentEffectY = 1, 
                          covariateEffectY = 1,
                          interactionEffectY = .25
-){
+                         ){
   X <- runif(n = N, min = -1, max = 1)
   Z <- runif(n = N, min = -1, max = 2)
   D <- rbinom(n = N, size = 1, prob = 0.5)
@@ -58,10 +58,10 @@ plotEstimates <- function(N = 1000,
     OurModel <- bootstrapDelta(Y ~ D + X,
                                instrumentFormula = ~ Z,
                                data = CurrentData,
-                               effectType = 'All',
+                               effectType = 'Population',
                                nBoots = 10)
-    Est <- OurModel$MeanEst[2]
-    SE <- OurModel$SE[2]
+    Est <- OurModel$MeanEst$Pop[2]
+    SE <- OurModel$SE$Pop[2]
     return(list(OLSCoef = OLS[1], OLSSE = OLS[2], 
                 ATECoef = Est, ATESE = SE))
   }
