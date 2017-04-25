@@ -26,27 +26,39 @@ ATE <- function(regressionFormula,
   if(effectType == "Population"){
       cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
         'Summary:\n',
-        '          ', 'Mean       ','Median  ','SE      ','lower 95%','upper 95%\n',
-        'Population', Results$MeanEst$Pop[2], Results$MedianEst$Pop[2], 
-        Results$SE$Pop[2], Results$Quantiles$Pop[1,2], Results$Quantiles$Pop[2,2])
+        '          ', 'Mean ','Median','SE  ','low95%','up95%\n',
+        'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
+        format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
+        format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
+        format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
+        format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
     invisible(Results)
   } 
   if(effectType == "Respondent"){
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
       'Summary:\n',
-      '          ', 'Mean       ','Median  ','SE      ','lower 95%','upper 95%\n',
-      'Respondent', Results$MeanEst$Resp[2], Results$MedianEst$Resp[2], 
-      Results$SE$Resp[2], Results$Quantiles$Resp[1,2], Results$Quantiles$Resp[2,2])
+      '          ', 'Mean ','Median','SE  ','low95%','up95%\n',
+      'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
+      format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
+      format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
+      format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
+      format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3))
     invisible(Results)
   }
   if(effectType == "Both"){  ## to do: aligning columns consistently
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
       'Summary:\n',
-      '          ', 'Mean     ','Median  ','SE      ','lower 95%','upper 95%\n',
-      'Respondent',  Results$MeanEst$Resp[2], Results$MedianEst$Resp[2], 
-      Results$SE$Resp[2], Results$Quantiles$Resp[1,2], Results$Quantiles$Resp[2,2],'\n',
-      'Population', Results$MeanEst$Pop[2], Results$MedianEst$Pop[2], 
-      Results$SE$Pop[2], Results$Quantiles$Pop[1,2], Results$Quantiles$Pop[2,2])
+      '          ', 'Mean ','Median','SE  ','low95%','up95%\n',
+      'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
+      format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
+      format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
+      format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
+      format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3),'\n',
+      'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
+      format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
+      format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
+      format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
+      format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
     invisible(Results)
   }
 }
