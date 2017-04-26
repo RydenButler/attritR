@@ -11,7 +11,8 @@ load_all(Current)
 document(Current)
 
 # This will tak a moment ...
-demo(plotEstimates)
+demo(plotAttrition)
+demo(plotInteraction)
 
 ### Check Proposition 4:
 simulateData <- function(N = 1000,

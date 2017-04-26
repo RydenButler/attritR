@@ -1,1 +1,2 @@
-plotEstimates  Demo file for ATE
+plotAttrition  Demo file for effect of attrition on estimated ATE
+plotInteraction Demo file for effect of heterogeneous treatment effects
