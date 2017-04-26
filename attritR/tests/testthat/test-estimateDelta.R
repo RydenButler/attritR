@@ -60,20 +60,20 @@ Test.RespondentModel <- lm(formula = Y ~ Treatment + Covariate,
                            data = TestData)
 
 # Estimate Proposition 5:
-Test.AllModel <- lm(formula = Y ~ Treatment + Covariate,
+Test.PopulationModel <- lm(formula = Y ~ Treatment + Covariate,
                     weights = 1/pWxPi,
                     data = TestData)
 
 # Final output of estimateDelta:  
 Test.Delta <- list(RespondentDelta = Test.RespondentModel,
-                   AllDelta = Test.AllModel)
+                   PopulationDelta = Test.PopulationModel)
 
 
 # Unit Testing ###############################################
 # ============================================================
 
 # test estimated values for RespondentDelta
-test_that("Test that estimateDelta gives correct values for RespondentDelta", {
+test_that("estimateDelta returns correct values for RespondentDelta", {
   # test estimated intercept value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[1],
@@ -89,21 +89,25 @@ test_that("Test that estimateDelta gives correct values for RespondentDelta", {
 })
 
 # test estimated values for AllDelta
-test_that("Test that estimateDelta gives correct values for AllDelta", {
+test_that("estimateDelta returns correct values for PopulationDelta", {
   # test estimated intercept value
-  expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
+  expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, 
-                                    data = TestData)$AllDelta)[1],
-    expected = unlist(Test.Delta$AllDelta)[1],
-    tolerance = 0.)
+                                    data = TestData)$PopulationDelta)[1]),
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[1]),
+               tolerance = 0.1)
   # test estimated treatment value
-  expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-    instrumentFormula = ~ Instrument, data = TestData)$AllDelta)[2],
-    expected = unlist(Test.Delta$AllDelta)[2])
-  # test estimated covariate values
-  expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-    instrumentFormula = ~ Instrument, data = TestData)$AllDelta)[3],
-    expected = unlist(Test.Delta$AllDelta)[3])
+  expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
+                                    instrumentFormula = ~ Instrument, 
+                                    data = TestData)$PopulationDelta)[2]),
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[2]),
+               tolerance = 0.1)
+  # test estimated covariate value
+  expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
+                                               instrumentFormula = ~ Instrument, 
+                                               data = TestData)$PopulationDelta)[3]),
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[3]),
+               tolerance = 0.2)
 })
 
 
