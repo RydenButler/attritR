@@ -1,5 +1,11 @@
 context("calculateWeights")
 
+context("probabilityFits")
+
+context("Proposition1")
+context("Proposition2")
+context("Proposition3")
+
 
 
 ### Create simulation data, SimData:
@@ -24,44 +30,78 @@ SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 ## Functions for fitting and working with generalized additive model are required.
 library(gam)
 
-## calculate weights without using the function:
+## Calculate weights without using the calculateWeights function:
+# Extract model data given formula
 TestData <- SimData
-TestData[ ,1] <- as.numeric(!is.na(.subset2(TestData, 1))) # Recode Y as R
-names(TestData)[1:2] <- c('R', 'D')
+TestData <- model.frame(Y ~ Treatment + Covariate, TestData, na.action = NULL)
+
+# Extract instrument data given formula
+Test.InstrumentData <- model.frame(~ Instrument, TestData, na.action = NULL)
+
+# Recode Y as a form of R, binary response variable 
+# which is 1 if Y is observed (non-attrition) and 0 otherwise (attrition)
+TestData[ ,1] <- ifelse(is.na(TestData[,1]) == TRUE, 0, 1) 
+names(TestData)[1] <- c('Response') # rename Y as Response
+
 # pW: response propensity scores
-# Regress R on X + Z; calculate fitted values
+# Regress 'Response(R)' on 'Covariate(X) + Instrument(Z)'; calculate fitted values
 # gam == glm coefficients?
-TestData$p_W_Fits <- predict(object = glm(formula = R ~ Treatment + Covariate + Instrument, # Calculate model and then fitted value
+TestData$p_W_Fits <- predict(object = glm(formula = Response ~ Treatment + Covariate + Instrument, 
+                                          # Calculate model and then fitted value
                                           family = binomial(link = logit),
                                           data = TestData,
                                           maxit = 1000),
                              newdata = TestData,
                              type = 'response')
-TestData[TestData$D != 1, ]$p_W_Fits <- (1 - TestData)[TestData$D != 1, ]$p_W_Fits
+TestData[TestData$Treatment != 1, ]$p_W_Fits <- (1 - TestData)[TestData$Treatment != 1, ]$p_W_Fits
+
 # Pi: treatment propensity scores
-# Regress D on X + Z
-Test.Pi_Fits <- predict(object = glm(formula = D ~ Covariate + p_W_Fits, # Calculate model and then fitted value
+# Regress 'Treatment(D)' on 'Covariates(X) + p_W_Fits(response propensity scores)'
+Test.Pi_Fits <- predict(object = glm(formula = Treatment ~ Covariate + p_W_Fits, 
+                                     # Calculate model and then fitted value
                                      family = binomial(link = logit),
                                      data = TestData, # Since default formula is D ~ ., we remove R
-                                                            # conditioning on R=1
+                                                      # conditioning on R=1
                                      maxit = 1000),
                         newdata = TestData,
                         type = 'response')
-Test.Pi_Fits[TestData$D != 1] <- (1 - Test.Pi_Fits[TestData$D != 1])
+Test.Pi_Fits[TestData$Treatment != 1] <- (1 - Test.Pi_Fits[TestData$Treatment != 1])
 
 # Product of response propensity scores and treatment propensity scores
 Test.AllWeights <- TestData$p_W_Fits * Test.Pi_Fits
 
-# Final output:
+# Final output for calculateWeights fucntion:
 Test.WeightList <- list(pW = TestData$p_W_Fits, 
-                     Pi = Test.Pi_Fits,
-                     pWxPi = Test.AllWeights)
+                        Pi = Test.Pi_Fits,
+                        pWxPi = Test.AllWeights)
  
+# For testing probabilityFits function:
+# Calculate predicted probabilities for fitted model
+Test.probabilityFits <- predict(object = gam(formula = Response ~., 
+                                             family = binomial(link = logit),
+                                             data = TestData,
+                                             maxit = 1000),
+                                newdata = TestData, type = 'response')
+# Proposition 1
+Test.Proposition1 <- Test.probabilityFits 
+Test.Proposition1[TestData$Response == 0] <- (1 - Test.probabilityFits[TestData$Response==0]) # for Response=0
+
+# Proposition 2
+Test.Proposition2 <- predict(object = gam(formula = Treatment ~., 
+                                family = binomial(link = logit),
+                                data = TestData[TestData$Response == 1,], # for Response=1
+                                maxit = 1000),
+                   newdata = TestData, type = 'response')
+Test.Proposition2[TestData$Treatment == 0] <- (1 - Test.Proposition2[TestData$Treatment == 0]) # for Response=0
+  
+# Proposition 3
+Test.Proposition3 <- Test.Proposition1*Test.Proposition2
+
 
 # Unit Testing ###############################################
 # ============================================================
 
-test_that("calculateWeights calculated correct values", {
+test_that("calculateWeights returns correct values", {
   # testing for pW value
   expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pW,
     expected = Test.WeightList$pW)
@@ -71,6 +111,41 @@ test_that("calculateWeights calculated correct values", {
   # testing pWxPi value
   expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pWxPi,
     expected = Test.WeightList$pWxPi)
+})
+
+test_that("probabilityFits returns correct values", {
+  # testing for probabilityFits
+  expect_equal(probabilityFits(formula = Response ~., 
+                               modelData = TestData, 
+                               method = binomial(link = logit)
+                               ),
+               Test.probabilityFits)
+})
+
+test_that("Proposition1 returns correct values",{
+  # testing for Proposition1
+  expect_equal(Proposition1(modelData = TestData, 
+                            formula = Response ~.,
+                            method = binomial(link = logit)
+                            ),
+               Test.Proposition1)
+})
+
+test_that("Proposition2 returns correct values",{
+  # testing for Proposition2
+  expect_equal(Proposition2(modelData = TestData,
+                            formula = Treatment ~.,
+                            method = binomial(link = logit)),
+               Test.Proposition2)
+  })
+
+test_that("Proposition3 returns correct values",{
+  # testing for Proposition2
+  expect_equal(Proposition3(modelData = TestData,
+                            formulaP1 = Response ~ .,
+                            formulaP2 = Treatment ~ .,
+                            method = binomial(link = logit)),
+               Test.Proposition3)
 })
 
 # SAVED TESTS FOR LATER TESTS ---------------------------------------------------------------

@@ -25,35 +25,30 @@ SimData <- data.frame(Y,Treatment,Covariate,Instrument)
 ## Functions for fitting and working with generalized additive model are required.
 library(gam)
 
-# Extract model data given formula
+
 TestData <- SimData
-TestData <- model.frame(Y ~ Treatment + Covariate, TestData, na.action = NULL)
 
-# Extract instrument data given formula
-Test.InstrumentData <- model.frame(~ Instrument, TestData, na.action = NULL)
-
-# Calculate weights -- Imported from 'test-calculateWeights' (see file for commented version) -------------
-
-TestData[ ,1] <- as.numeric(!is.na(.subset2(TestData, 1)))
-names(TestData)[1:2] <- c('R', 'D')
-TestData$p_W_Fits <- predict(object = glm(formula = R ~ Treatment + Covariate + Instrument, 
-  family = binomial(link = logit),
-  data = TestData,
-  maxit = 1000),
-  newdata = TestData,
-  type = 'response')
-TestData[TestData$D != 1, ]$p_W_Fits <- (1 - TestData)[TestData$D != 1, ]$p_W_Fits
-Test.Pi_Fits <- predict(object = glm(formula = D ~ Covariate + p_W_Fits,
-  family = binomial(link = logit),
-  data = TestData,
-  maxit = 1000),
-  newdata = TestData,
-  type = 'response')
-Test.Pi_Fits[TestData$D != 1] <- (1 - Test.Pi_Fits[TestData$D != 1])
+# Calculate weights:
+TestData[ ,1] <- ifelse(is.na(TestData[,1]) == TRUE, 0, 1) 
+names(TestData)[1] <- c('Response')
+TestData$p_W_Fits <- predict(object = glm(formula = Response ~ Treatment + Covariate + Instrument, 
+                                          family = binomial(link = logit),
+                                          data = TestData,
+                                          maxit = 1000),
+                             newdata = TestData,
+                             type = 'response')
+TestData[TestData$Treatment == 0, ]$p_W_Fits <- (1 - TestData)[TestData$Treatment==0, ]$p_W_Fits
+Test.Pi_Fits <- predict(object = glm(formula = Treatment ~ Covariate + p_W_Fits,
+                                     family = binomial(link = logit),
+                                     data = TestData,
+                                     maxit = 1000),
+                        newdata = TestData,
+                        type = 'response')
+Test.Pi_Fits[TestData$Treatment== 0] <- (1 - Test.Pi_Fits[TestData$Treatment==0])
 Test.AllWeights <- TestData$p_W_Fits * Test.Pi_Fits
 Test.WeightList <- list(pW = TestData$p_W_Fits, 
-  Pi = Test.Pi_Fits,
-  pWxPi = Test.AllWeights)
+                        Pi = Test.Pi_Fits,
+                        pWxPi = Test.AllWeights)
 
 # add estimated 'Pi'and 'pWxPi" to TestData
 TestData$Pi <- Test.WeightList$Pi
@@ -61,11 +56,12 @@ TestData$pWxPi <- Test.WeightList$pWxPi
   
 # Estimate Proposition 4:
 Test.RespondentModel <- lm(formula = Y ~ Treatment + Covariate,
-                           weights = Pi,
+                           weights = 1/Pi,
                            data = TestData)
+
 # Estimate Proposition 5:
 Test.AllModel <- lm(formula = Y ~ Treatment + Covariate,
-                    weights = pWxPi,
+                    weights = 1/pWxPi,
                     data = TestData)
 
 # Final output of estimateDelta:  
@@ -80,8 +76,8 @@ Test.Delta <- list(RespondentDelta = Test.RespondentModel,
 test_that("Test that estimateDelta gives correct values for RespondentDelta", {
   # test estimated intercept value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-    instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[1],
-    expected = unlist(Test.Delta$RespondentDelta)[1])
+                                    instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[1],
+               expected = unlist(Test.Delta$RespondentDelta)[1])
   # test estimated treatment value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
     instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[2],
@@ -96,8 +92,10 @@ test_that("Test that estimateDelta gives correct values for RespondentDelta", {
 test_that("Test that estimateDelta gives correct values for AllDelta", {
   # test estimated intercept value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-    instrumentFormula = ~ Instrument, data = TestData)$AllDelta)[1],
-    expected = unlist(Test.Delta$AllDelta)[1])
+                                    instrumentFormula = ~ Instrument, 
+                                    data = TestData)$AllDelta)[1],
+    expected = unlist(Test.Delta$AllDelta)[1],
+    tolerance = 0.)
   # test estimated treatment value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
     instrumentFormula = ~ Instrument, data = TestData)$AllDelta)[2],
