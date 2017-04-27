@@ -1,6 +1,5 @@
 context("estimateDelta")
 
-
 ## Estimating delta without using the estimateDelta function:
 
 ### Create simulation data, SimData:
@@ -11,8 +10,8 @@ Treatment <- rbinom(n = 1000, size = 1, prob = 0.5)
 Covariate <- runif(n = length(Treatment), min = -1, max = 1)
 Instrument <- runif(n = length(Treatment), min = -1, max = 2)
 
-# For attrition on observables
-UV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
+# For attrition on unobservables
+UV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
 U <- UV[ , 1]
 V <- UV[ , 2]
 
@@ -77,15 +76,15 @@ test_that("estimateDelta returns correct values for RespondentDelta", {
   # test estimated intercept value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[1],
-               expected = unlist(Test.Delta$RespondentDelta)[1])
+               expected = unlist(Test.Delta$RespondentDelta)[1], tolerance = 0.00001)
   # test estimated treatment value
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
     instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[2],
-    expected = unlist(Test.Delta$RespondentDelta)[2])
+    expected = unlist(Test.Delta$RespondentDelta)[2], tolerance = 0.00001)
   # test estimated covariate values
   expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
     instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[3],
-    expected = unlist(Test.Delta$RespondentDelta)[3])
+    expected = unlist(Test.Delta$RespondentDelta)[3], tolerance = 0.00001)
 })
 
 # test estimated values for AllDelta
@@ -94,17 +93,17 @@ test_that("estimateDelta returns correct values for PopulationDelta", {
   expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, 
                                     data = TestData)$PopulationDelta)[1]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[1]))
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[1]), tolerance = 0.00001)
   # test estimated treatment value
   expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, 
                                     data = TestData)$PopulationDelta)[2]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[2]))
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[2]), tolerance = 0.00001)
   # test estimated covariate value
   expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                                instrumentFormula = ~ Instrument, 
                                                data = TestData)$PopulationDelta)[3]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[3]))
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[3]), tolerance = 0.00001)
 })
 
 

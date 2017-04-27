@@ -1,12 +1,8 @@
 context("calculateWeights")
-
 context("probabilityFits")
-
 context("Proposition1")
 context("Proposition2")
 context("Proposition3")
-
-
 
 ### Create simulation data, SimData:
 library(MASS)
@@ -16,8 +12,8 @@ Treatment <- rbinom(n = 1000, size = 1, prob = 0.5)
 Covariate <- runif(n = length(Treatment), min = -1, max = 1)
 Instrument <- runif(n = length(Treatment), min = -1, max = 2)
 
-# For attrition on observables
-UV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
+# For attrition on unobservables
+UV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
 U <- UV[ , 1]
 V <- UV[ , 2]
 
@@ -70,7 +66,7 @@ Test.Pi_Fits[TestData$Treatment != 1] <- (1 - Test.Pi_Fits[TestData$Treatment !=
 # Product of response propensity scores and treatment propensity scores
 Test.AllWeights <- TestData$p_W_Fits * Test.Pi_Fits
 
-# Final output for calculateWeights fucntion:
+# Final output for calculateWeights function:
 Test.WeightList <- list(pW = TestData$p_W_Fits, 
                         Pi = Test.Pi_Fits,
                         pWxPi = Test.AllWeights)
@@ -82,20 +78,6 @@ Test.probabilityFits <- predict(object = gam(formula = Response ~.,
                                              data = TestData,
                                              maxit = 1000),
                                 newdata = TestData, type = 'response')
-# Proposition 1
-Test.Proposition1 <- Test.probabilityFits 
-Test.Proposition1[TestData$Response == 0] <- (1 - Test.probabilityFits[TestData$Response==0]) # for Response=0
-
-# Proposition 2
-Test.Proposition2 <- predict(object = gam(formula = Treatment ~., 
-                                family = binomial(link = logit),
-                                data = TestData[TestData$Response == 1,], # for Response=1
-                                maxit = 1000),
-                   newdata = TestData, type = 'response')
-Test.Proposition2[TestData$Treatment == 0] <- (1 - Test.Proposition2[TestData$Treatment == 0]) # for Response=0
-  
-# Proposition 3
-Test.Proposition3 <- Test.Proposition1*Test.Proposition2
 
 
 # Unit Testing ###############################################
@@ -104,13 +86,13 @@ Test.Proposition3 <- Test.Proposition1*Test.Proposition2
 test_that("calculateWeights returns correct values", {
   # testing for pW value
   expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pW,
-    expected = Test.WeightList$pW)
+    expected = Test.WeightList$pW, tolerance = 0.00001)
   # testing Pi value
   expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$Pi,
-    expected = Test.WeightList$Pi)
+    expected = Test.WeightList$Pi, tolerance = 0.00001)
   # testing pWxPi value
   expect_equal(calculateWeights(modelData = SimData[,1:3], instrumentData = SimData[,4])$pWxPi,
-    expected = Test.WeightList$pWxPi)
+    expected = Test.WeightList$pWxPi, tolerance = 0.00001)
 })
 
 test_that("probabilityFits returns correct values", {
@@ -120,32 +102,6 @@ test_that("probabilityFits returns correct values", {
                                method = binomial(link = logit)
                                ),
                Test.probabilityFits)
-})
-
-test_that("Proposition1 returns correct values",{
-  # testing for Proposition1
-  expect_equal(Proposition1(modelData = TestData, 
-                            formula = Response ~.,
-                            method = binomial(link = logit)
-                            ),
-               Test.Proposition1)
-})
-
-test_that("Proposition2 returns correct values",{
-  # testing for Proposition2
-  expect_equal(Proposition2(modelData = TestData,
-                            formula = Treatment ~.,
-                            method = binomial(link = logit)),
-               Test.Proposition2)
-  })
-
-test_that("Proposition3 returns correct values",{
-  # testing for Proposition2
-  expect_equal(Proposition3(modelData = TestData,
-                            formulaP1 = Response ~ .,
-                            formulaP2 = Treatment ~ .,
-                            method = binomial(link = logit)),
-               Test.Proposition3)
 })
 
 # SAVED TESTS FOR LATER TESTS ---------------------------------------------------------------
