@@ -46,7 +46,7 @@
 #'
 #' @return A list containing two elements, each of which is an \code{lm} object 
 #' containing estimates for the treatment effect and the effects of covariates included in
-#' \code{regressionFormula}}.
+#' \code{regressionFormula}.
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
 #' @rdname estimateDelta

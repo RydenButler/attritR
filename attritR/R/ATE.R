@@ -119,14 +119,6 @@ ATE <- function(regressionFormula,
                                check.names = FALSE)
       cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
         'Summary:\n')
-        # '          ', 'Mean ','Median','SE  ',
-        #             paste0('lower',' ',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
-        #             paste0('upper',' ',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
-        # 'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
-        # format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
-        # format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
-        # format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
-        # format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
         print(ResultsPrint)
     invisible(Results)
   } 
@@ -140,14 +132,6 @@ ATE <- function(regressionFormula,
                                check.names = FALSE)
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
       'Summary:\n')
-      # '          ', 'Mean ','Median','SE  ',
-      #             paste0('lower',' ',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
-      #             paste0('upper',' ',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
-      # 'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
-      # format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
-      # format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
-      # format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
-      # format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3))
       print(ResultsPrint)
     invisible(Results)
   }
@@ -166,19 +150,6 @@ ATE <- function(regressionFormula,
                                check.names = FALSE)
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
       'Summary:\n')
-    #   '          ', 'Mean ','Median','SE  ',
-    #                   paste0('lower',' ',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
-    #                   paste0('upper',' ',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
-    #   'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
-    #   format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
-    #   format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
-    #   format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
-    #   format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3),'\n',
-    #   'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
-    #   format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
-    #   format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
-    #   format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
-    #   format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
     print(ResultsPrint)
     invisible(Results)
   }

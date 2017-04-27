@@ -64,13 +64,14 @@ to the desired ATE calculation. By default, the function calculates the ATE on t
 that class); a symbolic description of the model to be fitted.  \code{regressionFormula}
 is the model which will be used to estimate the average treatment effect accounting for 
 non-random attrition. Formula must be of the form Y ~ D + ..., where Y is the outcome, 
-D is the treatment, and ... represents any additional covariates.}
+D is the treatment, and ... represents any additional covariates.  The first covariate
+in the formula MUST be the treatment, D.}
 
 \item{instrumentFormula}{An object of class \code{formula} (or one that can be coerced to
 that class); a symbolic description of the model to be fitted.  \code{instrumentFormula}
-is the model which estimates the weights used in the model which estimates the average
-treatment effect.  Formula must be of the form ~ Z1 + ..., where Z1 represents
-some instrumental variable, and ... represents any additional covariates.}
+contains the instruments to be used to calculate the weights which account for non-random
+atrrition.  Formula must be of the form ~ Z1 + ..., where Z1 represents
+some instrumental variable, and ... represents any additional instruments.}
 
 \item{data}{A data frame which contains all variables to be used in both 
 \code{regressionFormula} and \code{instrumentFormula}.}
@@ -79,7 +80,7 @@ some instrumental variable, and ... represents any additional covariates.}
 that class); a symbolic description of the model to be fitted.  \code{p_W_Formula}
 is the model which estimates subjects' response propensity, which is used in generating
 the weights which account for non-random attrition.  By default, the formula includes
-all covariates in the specified data frame.}
+all covariates included in \code{regressionFormula}.}
 
 \item{p_W_Method}{A character string which indicates the the error distribution and 
 link function to be used in the generalized additive model which estimates subjects'
@@ -91,7 +92,7 @@ function that \code{gam} accepts can be specified here.}
 that class); a symbolic description of the model to be fitted.  \code{p_W_Formula}
 is the model which estimates subjects' treatment propensity, which is used in generating
 the weights which account for non-random attrition.  By default, the formula includes
-all covariates in the specified data frame.}
+all covariates included in \code{regressionFormula}.}
 
 \item{PiMethod}{A character string which indicates the the error distribution and 
 link function to be used in the generalized additive model which estimates subjects'

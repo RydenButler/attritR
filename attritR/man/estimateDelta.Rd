@@ -42,6 +42,11 @@ manipulating this formula.}
 By default this is binomial(link = logit). Other valid methods include those that function in the 
  family argument to the \code{gam} or function.}
 }
+\value{
+A list containing two elements, each of which is an \code{lm} object 
+containing estimates for the treatment effect and the effects of covariates included in
+\code{regressionFormula}.
+}
 \description{
 \code{estimateDelta} estimates the average treatment effect (ATE) under conditions of
 non-random attrition.
