@@ -62,22 +62,14 @@ Sim.Estimates$Pop <- sapply(X = Sim.BootsList,
     Sim.SEs <- lapply(Sim.Estimates, function(x) apply(x, 1, sd))
     Sim.Means <- lapply(Sim.Estimates, rowMeans)
     Sim.Medians <- lapply(Sim.Estimates, function(x) apply(x, 1, median))
-    # Note that the bootstrapping results in some NA coefficient estimates (colinearity? too much missingness?)
-    # As a result, na.rm is required here for the quantiles (though strangely, not for the other functions)
-    # This is unnecessary with larger sample sizes, and may disappear with additional noise
-    # All efforts should be taken to have na.rm == F, as wanton removal of NAs can gloss over major errors
-    # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
-    # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
-    # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
-    Quantiles <- lapply(Estimates, function(x) apply(x, 1, function(y) quantile(y, quantiles, na.rm=T)))
-    # Stopping the cluster
-    stopCluster(BootsCluster)
+    Sim.Quantiles <- lapply(Sim.Estimates, function(x) apply(x, 1, function(y) quantile(y, quantiles, na.rm=T)))
+
     # return list with mean, median, and standard error of estimated for treatment and control
-    return(list(MeanEst = Means, 
-                MedianEst = Medians, 
-                SE = SEs,
-                Quantiles = Quantiles,
-                Matrix = Estimates)    )
+    return(list(Sim.MeanEst = Sim.Means, 
+                Sim.MedianEst = Sim.Medians, 
+                Sim.SE = Sim.SEs,
+                Sim.Quantiles = Sim.Quantiles,
+                Sim.Matrix = Sim.Estimates)    )
 
 
 
