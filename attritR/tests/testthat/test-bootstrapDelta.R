@@ -38,10 +38,6 @@ BootSim.both <- bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate,
                                effectType = 'Both') # default: effectType ='Population'
 BootSim.both$MeanEst
 
-#
-Sim.regressionFormula <- lm(Y ~ Treatment + Covariate)
-Sim.regressionFormula
-
 # Bootstrap data: manual sampling of dataset with replacement
 Sim.BootsList <- list()
 for(i in 1:1000) {Sim.BootsList[[i]] = SimData[sample(nrow(SimData), 1000, replace  = T),]}
@@ -55,19 +51,17 @@ Sim.Estimates$Resp <- sapply(
                                             unY ~ Treatment + Covariate,
                                             instrumentFormula = ~ Instrument,
                                             data = x)$RespondentDelta$coefficients)
-                                            
-    if(effectType == 'Population' | effectType == 'Both'){
-      Estimates$Pop <- parSapply(cl = Sim.BootsCluster, 
-                                 X = BootsList, 
-                                 FUN = function(x){
-                                   estimateDelta(regressionFormula = regressionFormula,
-                                   instrumentFormula = instrumentFormula,
-                                   data = x})$PopulationDelta$coefficients)
+
+Sim.Estimates$Pop <- sapply(X = Sim.BootsList, 
+                                      FUN = function(x) estimateDelta(regressionFormula = 
+                                      unY ~ Treatment + Covariate,
+                                      instrumentFormula = ~ Instrument,
+                                      data = x)$PopulationDelta$coefficients)
 
     # Calculate results: mean, median, and standard errors, based on bootstrapped replications
-    SEs <- lapply(Estimates, function(x) apply(x, 1, sd))
-    Means <- lapply(Estimates, rowMeans)
-    Medians <- lapply(Estimates, function(x) apply(x, 1, median))
+    Sim.SEs <- lapply(Sim.Estimates, function(x) apply(x, 1, sd))
+    Sim.Means <- lapply(Sim.Estimates, rowMeans)
+    Sim.Medians <- lapply(Sim.Estimates, function(x) apply(x, 1, median))
     # Note that the bootstrapping results in some NA coefficient estimates (colinearity? too much missingness?)
     # As a result, na.rm is required here for the quantiles (though strangely, not for the other functions)
     # This is unnecessary with larger sample sizes, and may disappear with additional noise
