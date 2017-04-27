@@ -44,8 +44,7 @@ Sim.regressionFormula
 
 # Bootstrap data: manual sampling of dataset with replacement
 Sim.BootsList <- list()
-n <- seq(1000)
-for(i in 1:length(n)) {Sim.BootsList[[i]] = SimData[sample(nrow(SimData), n[i], replace  = T),]}
+for(i in 1:1000) {Sim.BootsList[[i]] = SimData[sample(nrow(SimData), 1000, replace  = T),]}
 
 
 Sim.Estimates <- list()
