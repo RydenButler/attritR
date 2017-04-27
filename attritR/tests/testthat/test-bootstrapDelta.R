@@ -33,9 +33,9 @@ Test.Weightlist <- calculateWeights(modelData = SimData,
 
 # Check BoootstrapDelta
 BootSim.both <- bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                           instrumentFormula = ~ Instrument, 
-                           data = SimData,
-                           effectType = 'Both') # default: effectType ='Population'
+                               instrumentFormula = ~ Instrument, 
+                               data = SimData,
+                               effectType = 'Both') # default: effectType ='Population'
 BootSim.both$MeanEst
 
 #
@@ -44,9 +44,9 @@ Sim.regressionFormula
 
 # Bootstrap data: random sampling of dataset with replacement
 Sim.BootsList <- sapply(X = SimData,
-                       FUN = function(x) SimData[sample(x = nrow(SimData),
+                       FUN = function(x) replicate(1000, SimData[sample(x = nrow(SimData),
                                                          size = nrow(SimData),
-                                                         replace = TRUE), ]
+                                                         replace = TRUE), ])
                        )
 Sim.Estimates <- list()
 
