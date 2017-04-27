@@ -31,28 +31,16 @@ Test.Weightlist <- calculateWeights(modelData = SimData,
                                     PiFormula = D ~.,
                                     PiMethod = binomial(link = logit))
 
-# Check observables
-BootSim.obs.both <- bootstrapDelta(regressionFormula = Y ~ Treatment + Covariate, 
+# Check BoootstrapDelta
+BootSim.both <- bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                            instrumentFormula = ~ Instrument, 
-                           data = SimData.obs,
+                           data = SimData,
                            effectType = 'Both') # default: effectType ='Population'
-BootSim.obs.both$MeanEst
+BootSim.both$MeanEst
 
-Sim.regressionFormula.obs <- lm(Y ~ Treatment + Covariate)
-Sim.regressionFormula.obs
-
-# Check unobservables
-BootSim.unobs.both <- bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                     instrumentFormula = ~ Instrument, 
-                                     data = SimData.unobs,
-                                     effectType = 'Both') # default: effectType ='Population'
-BootSim.unobs.both$MeanEst
-Sim.regressionFormula.unobs <- lm(unY ~ Treatment + Covariate)
-Sim.regressionFormula.unobs
-
-Sim.instrumentFormula <- Instrument
-Sim.p_W_Formula <- 
-Sim.p_W_Method <- 
+#
+Sim.regressionFormula <- lm(Y ~ Treatment + Covariate)
+Sim.regressionFormula
 
     
 # Make cluster
