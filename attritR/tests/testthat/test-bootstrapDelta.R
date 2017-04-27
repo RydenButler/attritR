@@ -8,17 +8,6 @@ Treatment <- rbinom(n = 1000, size = 1, prob = 0.5)
 Covariate <- runif(n = length(Treatment), min = -1, max = 1)
 Instrument <- runif(n = length(Treatment), min = -1, max = 2)
 
-# For attrition on observables
-UV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0, 0, 1), nrow = 2))
-U <- UV[ , 1]
-V <- UV[ , 2]
-
-Y <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + U
-R <- 1*Treatment + 1*Covariate + 0*Instrument + V > 0
-Y[!R] <- NA
-
-SimData.obs <- data.frame(Y, Treatment, Covariate, Instrument)
-
 # For attrition on unobservables
 unUV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
 unU <- unUV[ , 1]
@@ -28,27 +17,19 @@ unY <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + unU
 unR <- 0.5*Treatment + 0.5*Covariate + 1*Instrument + unV > 0
 unY[!unR] <- NA
 
-SimData.unobs <- data.frame(unY, Treatment, Covariate, Instrument)
+SimData <- data.frame(unY, Treatment, Covariate, Instrument)
 
 
 ## Functions for fitting and working with generalized additive model are required.
 library(gam)
 
-# Calculate weights for SimData.obs, SimData.unobs:
-Test.Weightlist.obs <- calculateWeights(modelData = SimData.obs,
-                                        instrumentData = Instrument,
-                                        p_W_Formula = R ~.,
-                                        p_W_Method = binomial(link = logit),
-                                        PiFormula = D ~.,
-                                        PiMethod = binomial(link = logit))
-
-Test.Weightlist.unobs <- calculateWeights(modelData = SimData.unobs,
-                                          instrumentData = Instrument,
-                                          p_W_Formula = R ~.,
-                                          p_W_Method = binomial(link = logit),
-                                          PiFormula = D ~.,
-                                          PiMethod = binomial(link = logit))
-
+# Calculate weights for SimData:
+Test.Weightlist <- calculateWeights(modelData = SimData,
+                                    instrumentData = Instrument,
+                                    p_W_Formula = R ~.,
+                                    p_W_Method = binomial(link = logit),
+                                    PiFormula = D ~.,
+                                    PiMethod = binomial(link = logit))
 
 # Check observables
 BootSim.obs.both <- bootstrapDelta(regressionFormula = Y ~ Treatment + Covariate, 
