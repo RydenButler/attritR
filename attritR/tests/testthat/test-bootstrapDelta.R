@@ -49,13 +49,12 @@ for(i in 1:1000) {Sim.BootsList[[i]] = SimData[sample(nrow(SimData), 1000, repla
 
 Sim.Estimates <- list()
 
-Estimates$Resp <- sapply(
+Sim.Estimates$Resp <- sapply(
                       X = Sim.BootsList, 
-                      FUN = function(x){
-                        estimateDelta(regressionFormula = 
-                            unY ~ Treatment + Covariate,
-                          instrumentFormula = ~ Instrument,
-                          data = X)})
+                      FUN = function(x) estimateDelta(regressionFormula = 
+                                            unY ~ Treatment + Covariate,
+                                            instrumentFormula = ~ Instrument,
+                                            data = x)$RespondentDelta$coefficients)
                                             
     if(effectType == 'Population' | effectType == 'Both'){
       Estimates$Pop <- parSapply(cl = Sim.BootsCluster, 
