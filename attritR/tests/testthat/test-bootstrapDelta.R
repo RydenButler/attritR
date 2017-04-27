@@ -42,12 +42,12 @@ BootSim.both$MeanEst
 Sim.regressionFormula <- lm(Y ~ Treatment + Covariate)
 Sim.regressionFormula
 
-# Bootstrap data: random sampling of dataset with replacement
-Sim.BootsList <- sapply(X = SimData,
-                       FUN = function(x) replicate(1000, SimData[sample(x = nrow(SimData),
-                                                         size = nrow(SimData),
-                                                         replace = TRUE), ])
-                       )
+# Bootstrap data: manual sampling of dataset with replacement
+Sim.BootsList <- list()
+n <- seq(1000)
+for(i in 1:length(n)) {Sim.BootsList[[i]] = SimData[sample(nrow(SimData), n[i], replace  = T),]}
+
+
 Sim.Estimates <- list()
 
 
