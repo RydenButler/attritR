@@ -31,6 +31,50 @@ and ... represents any other desired instrumental variables.}
 \item{data}{A data frame which contains all variables to be used in both 
 \code{regressionFormula} and \code{instrumentFormula}.}
 
+\item{p_W_Formula}{The regression formula (of class \code{formula}) for calculating the response propensity probabilities.
+By default this formula is of the form R ~ ., where R represents the presence of a response 
+and . represents treatment, desired covariates, and the instrument. Users are strongly discouraged 
+from manipulating this formula.}
+
+\item{p_W_Method}{The regression method for calculating the response propensity probabilities.
+By default this is binomial(link = logit). Other valid methods include those that function in the 
+family argument to the \code{gam} function.}
+
+\item{PiFormula}{The regression formula (of class \code{formula}) for calculating the treatment propensity probabilities.
+By default this formula is of the form D ~ ., where D represents treatment and . represents
+desired covariates and the response propensity probabilities. Users are strongly discouraged from
+manipulating this formula.}
+
+\item{PiMethod}{The regression method for calculating the treatment propensity probabilities.
+By default this is binomial(link = logit). Other valid methods include those that function in the 
+ family argument to the \code{gam} or function.}
+
+\item{nBoots}{Numeric value defining the number of bootstrap samples; the default number
+of bootstrap replications is 1,000.}
+
+\item{quantiles}{A vector of percentiles for which the bootstrapped quantiles will be returned.
+By default the function returns the quantiles corresponding to the 5th and 95th percentiles.}
+
+\item{effectType}{A string of either 'Population', 'Respondent', or 'Both', corresponding
+to the desired ATE calculation. By default, the function calculates the ATE on the population.}
+
+\item{nCores}{}
+
+\item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to
+that class); a symbolic description of the model to be fitted.  \code{regressionFormula}
+is the model which will be used to estimate the average treatment effect accounting for 
+non-random attrition. Formula must be of the form Y ~ D + ..., where Y is the outcome, 
+D is the treatment, and ... represents any additional covariates.}
+
+\item{instrumentFormula}{An object of class \code{formula} (or one that can be coerced to
+that class); a symbolic description of the model to be fitted.  \code{instrumentFormula}
+is the model which estimates the weights used in the model which estimates the average
+treatment effect.  Formula must be of the form ~ Z1 + ..., where Z1 represents
+some instrumental variable, and ... represents any additional covariates.}
+
+\item{data}{A data frame which contains all variables to be used in both 
+\code{regressionFormula} and \code{instrumentFormula}.}
+
 \item{p_W_Formula}{An object of class \code{formula} (or one that can be coerced to
 that class); a symbolic description of the model to be fitted.  \code{p_W_Formula}
 is the model which estimates subjects' response propensity, which is used in generating
@@ -56,7 +100,7 @@ treatment propensity.  By default, \code{p_W_Formula} is set to
 function that \code{gam} accepts can be specified here.}
 
 \item{nBoots}{Numeric value defining the number of bootstrap samples; the default number
-of bootstrap replications is 1,000.}
+of bootstrap replications is 1000.}
 
 \item{quantiles}{Vector of two numeric values between 0 and 1 specifying the quantiles
 at which estimates of the average treatment effect will be returned.  
@@ -71,40 +115,22 @@ only among respondents, and among all subjects.}
 
 \item{nCores}{Numeric value indicating the number of cores to allocate to running the
 function.  See \code{parallel} for details.}
-
-\item{weightMethod}{An optional string indicating the estimation method to be used for
-generating the weights.  The default method is generalized linear model ("glm").}
-
-\item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to
-that class); a symbolic description of the model to be fitted.  \code{regressionFormula}
-is the model which will be used to estimate the average treatment effect accounting for 
-non-random attrition. Formula must be of the form Y ~ D + ..., where Y is the outcome, 
-D is the treatment, and ... represents any additional covariates.}
-
-\item{instrumentFormula}{An object of class \code{formula} (or one that can be coerced to
-that class); a symbolic description of the model to be fitted.  \code{instrumentFormula}
-is the model which estimates the weights used in the model which estimates the average
-treatment effect.  Formula must be of the form ~ Z1 + ..., where Z1 represents
-some instrumental variable, and ... represents any additional covariates.}
-
-\item{data}{A data frame which contains all variables to be used in both 
-\code{regressionFormula} and \code{instrumentFormula}.}
-
-\item{nBoots}{Numeric value defining the number of bootstrap samples; the default number
-of bootstrap replications is 1000.}
 }
 \value{
-A list of three vectors for mean, median, and standard errors of the ATE.
- \item{MeanEst}{A numeric vector of mean values of the ATE for treatment 
- and control group.}
- \item{MedianEst}{A numeric vector of the median of the ATE for treatment 
- and control group.}
- \item{SE}{A numeric vector of standard errors of the ATE for treatment 
- and control group.}
- \item{Quantiles}{A matrix containing estimates that correspond to the quantile (row)
- and coefficient (column). By defualt it returns the 5\% and 95\% quantiles.}
- \item{Matrix}{A matrix containing the bootstrapped coefficient estimates, where each
- row corresponds to a covaraite, and each column corresponds to a bootstrap iteration.}
+A list of six lists. If effectType = 'Both', each list contains two lists, otherwise
+each element consists of only one list.
+ \item{MeanEst}{A list containing a numeric vector of mean estimates for the effects of treatment and
+ covariates of interest.}
+ \item{MedianEst}{A list containing a numeric vector of median estimates for the effects of treatment and
+ covariates of interest.}
+ \item{SE}{A list containing a numeric vector of standard deviations for the estimated effects of treatment and
+ covariates of interest.}
+ \item{Quantiles}{A list containing a matrix of quantiles (rows) corresponding to the estimates
+ for the treatment and covariate effects (columns). By defualt it returns quantiles corresponding to
+ the 5th and 95th percentiles.}
+ \item{Matrix}{A list containing a matrix of bootstrapped coefficient estimates, where each
+ row corresponds to a covariate, and each column corresponds to a bootstrap iteration.}
+ \item{Data}{A list containing a list of bootstrapped data frames.}
 
 A list of five elements containing the following:
  \item{MeanEst}{A list containing the mean estimated coefficients for the regression
@@ -126,7 +152,7 @@ A list of five elements containing the following:
  in the bootstrapped sample corresponding with the column index.}
 }
 \description{
-\code{bootstrapDeltaP} estimates standard errors of the average treatment effect (ATE) in parallel
+\code{bootstrapDelta} estimates standard errors of the average treatment effect (ATE)
 under conditions of non-random attrition.
 
 \code{ATE} estimates the average treatment effect under conditions of
@@ -136,9 +162,8 @@ under conditions of non-random attrition.
 The function estimates standard errors for the average treatment effect (ATE)
 after accounting for non-random attrition. After drawing random samples with 
 replacement from the provided data (by default, 1000 samples), the function 
-estimates with the bootstrapped sample the mean value, median, and standard errors 
-based on the bootstrapped replications. The function, thus, provides a measure of 
-accuracy to the point estimates for the ATE.
+calculates the sample mean, median, and standard errors 
+based on the bootstrapped estimates of the ATE.
 
 The function estimates the average treatment effect (ATE) under non-random attrition,
 and uses bootstrapping to estimate mean value, median, and standard errors 

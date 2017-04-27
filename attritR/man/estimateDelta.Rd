@@ -24,13 +24,23 @@ and ... represents any other desired instrumental variables.}
 \item{data}{A data frame which contains all variables to be used in both 
 \code{regressionFormula} and \code{instrumentFormula}.}
 
-\item{weightMethod}{An optional string indicating the estimation method to be used for
-generating the weights.  The default method is ___.}
-}
-\value{
-A numeric vector of the product of the response propensity score and treatment propensity score 
- \item{coefficients}{A numeric vector of the coefficients for the \code{regressionFormula}
- model.}
+\item{p_W_Formula}{The regression formula (of class \code{formula}) for calculating the response propensity probabilities.
+By default this formula is of the form R ~ ., where R represents the presence of a response 
+and . represents treatment, desired covariates, and the instrument. Users are strongly discouraged 
+from manipulating this formula.}
+
+\item{p_W_Method}{The regression method for calculating the response propensity probabilities.
+By default this is binomial(link = logit). Other valid methods include those that function in the 
+family argument to the \code{gam} function.}
+
+\item{PiFormula}{The regression formula (of class \code{formula}) for calculating the treatment propensity probabilities.
+By default this formula is of the form D ~ ., where D represents treatment and . represents
+desired covariates and the response propensity probabilities. Users are strongly discouraged from
+manipulating this formula.}
+
+\item{PiMethod}{The regression method for calculating the treatment propensity probabilities.
+By default this is binomial(link = logit). Other valid methods include those that function in the 
+ family argument to the \code{gam} or function.}
 }
 \description{
 \code{estimateDelta} estimates the average treatment effect (ATE) under conditions of

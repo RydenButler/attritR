@@ -13,7 +13,20 @@
 #' @param instrumentData A matrix with a column of \code{Z}, indicating instrumental variable. 
 #' \code{Z} is a predictor of response variable (R) of 1 if \code{Y} is observed and 0 otherwise (attribution).
 #' It needs to contain at least one continuous element and not to have a direct effect on the outcome (\code{Y}).
-#'
+#' @param p_W_Formula The regression formula (of class \code{formula}) for calculating the response propensity probabilities.
+#' By default this formula is of the form R ~ ., where R represents the presence of a response 
+#' and . represents treatment, desired covariates, and the instrument. Users are strongly discouraged 
+#' from manipulating this formula.
+#' @param p_W_Method The regression method for calculating the response propensity probabilities.
+#'  By default this is binomial(link = logit). Other valid methods include those that function in the 
+#'  family argument to the \code{gam} function.
+#' @param PiFormula The regression formula (of class \code{formula}) for calculating the treatment propensity probabilities.
+#' By default this formula is of the form D ~ ., where D represents treatment and . represents
+#' desired covariates and the response propensity probabilities. Users are strongly discouraged from
+#' manipulating this formula.
+#' @param PiMethod The regression method for calculating the treatment propensity probabilities.
+#' By default this is binomial(link = logit). Other valid methods include those that function in the 
+#'  family argument to the \code{gam} or function.
 #' 
 #' @details
 #' The function estimates the response propensity score and the treatment propensity score 
@@ -29,9 +42,10 @@
 #' Social Experiments Under Alternative Forms of Attrition.", Journal of 
 #' Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
 #'
-#' @return A dataframe of estimated weights for treated and untreated(control) group.
-#'  \item{column1}{A dataframe of estimated weights for treated and untreated group, 
-#'  returned by products of predicted values which are calculated by \code{method}.}
+#' @return A list of estimated probabilities for each respondent.
+#'  \item{pW}{Response propensity probabilities for each respondent.}
+#'  \item{Pi}{Treatment propensity probabilities for each respondent.}
+#'  \item{pWxPi}{The product of the response and treatment propensity probabilities.}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
 #' @rdname calculateWeights

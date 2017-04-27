@@ -19,11 +19,30 @@ Otherwise, the incorrect output will be produced.}
 \item{instrumentData}{A matrix with a column of \code{Z}, indicating instrumental variable. 
 \code{Z} is a predictor of response variable (R) of 1 if \code{Y} is observed and 0 otherwise (attribution).
 It needs to contain at least one continuous element and not to have a direct effect on the outcome (\code{Y}).}
+
+\item{p_W_Formula}{The regression formula (of class \code{formula}) for calculating the response propensity probabilities.
+By default this formula is of the form R ~ ., where R represents the presence of a response 
+and . represents treatment, desired covariates, and the instrument. Users are strongly discouraged 
+from manipulating this formula.}
+
+\item{p_W_Method}{The regression method for calculating the response propensity probabilities.
+By default this is binomial(link = logit). Other valid methods include those that function in the 
+family argument to the \code{gam} function.}
+
+\item{PiFormula}{The regression formula (of class \code{formula}) for calculating the treatment propensity probabilities.
+By default this formula is of the form D ~ ., where D represents treatment and . represents
+desired covariates and the response propensity probabilities. Users are strongly discouraged from
+manipulating this formula.}
+
+\item{PiMethod}{The regression method for calculating the treatment propensity probabilities.
+By default this is binomial(link = logit). Other valid methods include those that function in the 
+ family argument to the \code{gam} or function.}
 }
 \value{
-A dataframe of estimated weights for treated and untreated(control) group.
- \item{column1}{A dataframe of estimated weights for treated and untreated group, 
- returned by products of predicted values which are calculated by \code{method}.}
+A list of estimated probabilities for each respondent.
+ \item{pW}{Response propensity probabilities for each respondent.}
+ \item{Pi}{Treatment propensity probabilities for each respondent.}
+ \item{pWxPi}{The product of the response and treatment propensity probabilities.}
 }
 \description{
 \code{calculateWeights} estimates the weights for treatment and control group 
