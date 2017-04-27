@@ -124,7 +124,8 @@ bootstrapDelta <- function(regressionFormula,
               MedianEst = Medians, 
               SE = SEs,
               Quantiles = Quantiles,
-              Matrix = Estimates
+              Matrix = Estimates,
+              Data = BootsList
   )
   )
 }
