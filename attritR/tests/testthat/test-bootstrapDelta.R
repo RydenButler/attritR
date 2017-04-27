@@ -42,33 +42,10 @@ BootSim.both$MeanEst
 Sim.regressionFormula <- lm(Y ~ Treatment + Covariate)
 Sim.regressionFormula
 
-    
-# Make cluster
-Sim.nCores <- 1
-Sim.varlist <- c('Sim.regressionFormula.obs', 
-                 'Sim.instrumentFormula', 
-                 'data',
-                 'p_W_Formula',
-                 'p_W_Method',
-                 'PiFormula',
-                 'PiMethod',
-                 'nBoots',
-                 'quantiles',
-                 'effectType',
-                 'estimateDelta',
-                 'calculateWeights',
-                 'probabilityFits',
-                 'gam')
-Sim.BootsCluster <- makeCluster(Sim.nCores)
-clusterExport(cl = Sim.BootsCluster, 
-              varlist = Sim.varlist, 
-              envir = environment())
-
 # Bootstrap data: random sampling of dataset with replacement
-BootsList <- parLapply(Sim.BootsCluster, 
-                       X = 1:nBoots, 
-                       fun = function(x) SimData.obs[sample(x = nrow(SimData.obs),
-                                                         size = nrow(SimData.obs),
+Sim.BootsList <- sapply(X = SimData,
+                       FUN = function(x) SimData[sample(x = nrow(SimData),
+                                                         size = nrow(SimData),
                                                          replace = TRUE), ]
                        )
 Sim.Estimates <- list()
