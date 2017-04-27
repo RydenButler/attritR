@@ -1,6 +1,6 @@
 #' Estimating standard errors for ATEs given non-random attrition
 #'
-#' \code{bootstrapDeltaP} estimates standard errors of the average treatment effect (ATE) in parallel
+#' \code{bootstrapDelta} estimates standard errors of the average treatment effect (ATE)
 #' under conditions of non-random attrition.
 #' 
 #' @param regressionFormula An object of class \code{formula} (or one that can be coerced to
@@ -15,34 +15,53 @@
 #' and ... represents any other desired instrumental variables.
 #' @param data A data frame which contains all variables to be used in both 
 #' \code{regressionFormula} and \code{instrumentFormula}.
-#' @param weightMethod An optional string indicating the estimation method to be used for
-#' generating the weights.  The default method is generalized linear model ("glm").
+#' @param p_W_Formula The regression formula (of class \code{formula}) for calculating the response propensity probabilities.
+#' By default this formula is of the form R ~ ., where R represents the presence of a response 
+#' and . represents treatment, desired covariates, and the instrument. Users are strongly discouraged 
+#' from manipulating this formula.
+#' @param p_W_Method The regression method for calculating the response propensity probabilities.
+#'  By default this is binomial(link = logit). Other valid methods include those that function in the 
+#'  family argument to the \code{gam} function.
+#' @param PiFormula The regression formula (of class \code{formula}) for calculating the treatment propensity probabilities.
+#' By default this formula is of the form D ~ ., where D represents treatment and . represents
+#' desired covariates and the response propensity probabilities. Users are strongly discouraged from
+#' manipulating this formula.
+#' @param PiMethod The regression method for calculating the treatment propensity probabilities.
+#' By default this is binomial(link = logit). Other valid methods include those that function in the 
+#'  family argument to the \code{gam} or function.
 #' @param nBoots Numeric value defining the number of bootstrap samples; the default number
 #' of bootstrap replications is 1,000.
+#' @param quantiles A vector of percentiles for which the bootstrapped quantiles will be returned.
+#' By default the function returns the quantiles corresponding to the 5th and 95th percentiles.
+#' @param effectType A string of either 'Population', 'Respondent', or 'Both', corresponding
+#' to the desired ATE calculation. By default, the function calculates the ATE on the population.
+#' @param nCores
 #' 
 #' @details
 #' The function estimates standard errors for the average treatment effect (ATE)
 #' after accounting for non-random attrition. After drawing random samples with 
 #' replacement from the provided data (by default, 1000 samples), the function 
-#' estimates with the bootstrapped sample the mean value, median, and standard errors 
-#' based on the bootstrapped replications. The function, thus, provides a measure of 
-#' accuracy to the point estimates for the ATE.
+#' calculates the sample mean, median, and standard errors 
+#' based on the bootstrapped estimates of the ATE.
 #' 
 #' @references Huber, Martin (2012): "Identification of Average Treatment Effects in 
 #' Social Experiments Under Alternative Forms of Attrition.", Journal of 
 #' Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
 #'
-#' @return A list of three vectors for mean, median, and standard errors of the ATE.
-#'  \item{MeanEst}{A numeric vector of mean values of the ATE for treatment 
-#'  and control group.}
-#'  \item{MedianEst}{A numeric vector of the median of the ATE for treatment 
-#'  and control group.}
-#'  \item{SE}{A numeric vector of standard errors of the ATE for treatment 
-#'  and control group.}
-#'  \item{Quantiles}{A matrix containing estimates that correspond to the quantile (row)
-#'  and coefficient (column). By defualt it returns the 5\% and 95\% quantiles.}
-#'  \item{Matrix}{A matrix containing the bootstrapped coefficient estimates, where each
-#'  row corresponds to a covaraite, and each column corresponds to a bootstrap iteration.}
+#' @return A list of six lists. If effectType = 'Both', each list contains two lists, otherwise
+#' each element consists of only one list.
+#'  \item{MeanEst}{A list containing a numeric vector of mean estimates for the effects of treatment and
+#'  covariates of interest.}
+#'  \item{MedianEst}{A list containing a numeric vector of median estimates for the effects of treatment and
+#'  covariates of interest.}
+#'  \item{SE}{A list containing a numeric vector of standard deviations for the estimated effects of treatment and
+#'  covariates of interest.}
+#'  \item{Quantiles}{A list containing a matrix of quantiles (rows) corresponding to the estimates
+#'  for the treatment and covariate effects (columns). By defualt it returns quantiles corresponding to
+#'  the 5th and 95th percentiles.}
+#'  \item{Matrix}{A list containing a matrix of bootstrapped coefficient estimates, where each
+#'  row corresponds to a covariate, and each column corresponds to a bootstrap iteration.}
+#'  \item{Data}{A list containing a list of bootstrapped data frames.}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
 #' @rdname bootstrapDelta
