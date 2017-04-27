@@ -7,19 +7,20 @@
 #' that class); a symbolic description of the model to be fitted.  \code{regressionFormula}
 #' is the model which will be used to estimate the average treatment effect accounting for 
 #' non-random attrition. Formula must be of the form Y ~ D + ..., where Y is the outcome, 
-#' D is the treatment, and ... represents any additional covariates.
+#' D is the treatment, and ... represents any additional covariates.  The first covariate
+#' in the formula MUST be the treatment, D.
 #' @param instrumentFormula An object of class \code{formula} (or one that can be coerced to
 #' that class); a symbolic description of the model to be fitted.  \code{instrumentFormula}
-#' is the model which estimates the weights used in the model which estimates the average
-#' treatment effect.  Formula must be of the form ~ Z1 + ..., where Z1 represents
-#' some instrumental variable, and ... represents any additional covariates.
+#' contains the instruments to be used to calculate the weights which account for non-random
+#' atrrition.  Formula must be of the form ~ Z1 + ..., where Z1 represents
+#' some instrumental variable, and ... represents any additional instruments.
 #' @param data A data frame which contains all variables to be used in both 
 #' \code{regressionFormula} and \code{instrumentFormula}.
 #' @param p_W_Formula An object of class \code{formula} (or one that can be coerced to
 #' that class); a symbolic description of the model to be fitted.  \code{p_W_Formula}
 #' is the model which estimates subjects' response propensity, which is used in generating
 #' the weights which account for non-random attrition.  By default, the formula includes
-#' all covariates in the specified data frame.
+#' all covariates included in \code{regressionFormula}.
 #' @param p_W_Method A character string which indicates the the error distribution and 
 #' link function to be used in the generalized additive model which estimates subjects'
 #' response propensity.  By default, \code{p_W_Formula} is set to 
@@ -29,7 +30,7 @@
 #' that class); a symbolic description of the model to be fitted.  \code{p_W_Formula}
 #' is the model which estimates subjects' treatment propensity, which is used in generating
 #' the weights which account for non-random attrition.  By default, the formula includes
-#' all covariates in the specified data frame.
+#' all covariates included in \code{regressionFormula}.
 #' @param PiMethod A character string which indicates the the error distribution and 
 #' link function to be used in the generalized additive model which estimates subjects'
 #' treatment propensity.  By default, \code{p_W_Formula} is set to 
@@ -106,49 +107,79 @@ ATE <- function(regressionFormula,
                             quantiles = quantiles,
                             effectType = effectType
                             )
+  
   # Printing summary result tables
   if(effectType == "Population"){
+    ResultsPrint <- data.frame('Mean'=c(format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3)),
+                               'Median'=c(format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3)),
+                               'SE'=c(format(round(Results$SE$Pop[2], digit=3), nsmall=3)),
+                               'Lower 5%'=c(format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3)),
+                               'Upper 95%'=c(format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3)),
+                               row.names = c("Population"),
+                               check.names = FALSE)
       cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
-        'Summary:\n',
-        '          ', 'Mean ','Median','SE  ',
-                    paste0('low',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
-                    paste0('low',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
-        'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
-        format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
-        format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
-        format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
-        format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
+        'Summary:\n')
+        # '          ', 'Mean ','Median','SE  ',
+        #             paste0('lower',' ',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
+        #             paste0('upper',' ',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
+        # 'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
+        # format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
+        # format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
+        # format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
+        # format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
+        print(ResultsPrint)
     invisible(Results)
   } 
   if(effectType == "Respondent"){
+    ResultsPrint <- data.frame('Mean'=c(format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3)),
+                               'Median'=c(format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3)),
+                               'SE'=c(format(round(Results$SE$Resp[2], digit=3), nsmall=3)),
+                               'Lower 5%'=c(format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3)),
+                               'Upper 95%'=c(format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3)),
+                               row.names = c("Respondent"),
+                               check.names = FALSE)
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
-      'Summary:\n',
-      '          ', 'Mean ','Median','SE  ',
-                  paste0('low',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
-                  paste0('low',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
-      'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
-      format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
-      format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
-      format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
-      format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3))
+      'Summary:\n')
+      # '          ', 'Mean ','Median','SE  ',
+      #             paste0('lower',' ',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
+      #             paste0('upper',' ',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
+      # 'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
+      # format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
+      # format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
+      # format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
+      # format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3))
+      print(ResultsPrint)
     invisible(Results)
   }
   if(effectType == "Both"){  ## to do: aligning columns consistently
+    ResultsPrint <- data.frame('Mean'=c(format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3),
+                                        format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3)),
+                               'Median'=c(format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3),
+                                          format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3)),
+                               'SE'=c(format(round(Results$SE$Resp[2], digit=3), nsmall=3),
+                                      format(round(Results$SE$Pop[2], digit=3), nsmall=3)),
+                               'Lower 5%'=c(format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3),
+                                            format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3)),
+                               'Upper 95%'=c(format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3),
+                                             format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3)),
+                               row.names = c("Respondent","Population"),
+                               check.names = FALSE)
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
-      'Summary:\n',
-      '          ', 'Mean ','Median','SE  ',
-                      paste0('low',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
-                      paste0('low',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
-      'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
-      format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
-      format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
-      format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
-      format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3),'\n',
-      'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
-      format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
-      format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
-      format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
-      format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
+      'Summary:\n')
+    #   '          ', 'Mean ','Median','SE  ',
+    #                   paste0('lower',' ',signif(as.numeric(substr(quantiles[1],3,4))),'%'),
+    #                   paste0('upper',' ',signif(as.numeric(substr(quantiles[2],3,4))),'%\n'),
+    #   'Respondent',  format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3), 
+    #   format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3), 
+    #   format(round(Results$SE$Resp[2], digit=3), nsmall=3), 
+    #   format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3), 
+    #   format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3),'\n',
+    #   'Population', format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3), 
+    #   format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3), 
+    #   format(round(Results$SE$Pop[2], digit=3), nsmall=3), 
+    #   format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3), 
+    #   format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3))
+    print(ResultsPrint)
     invisible(Results)
   }
 }
