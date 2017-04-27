@@ -94,20 +94,17 @@ test_that("estimateDelta returns correct values for PopulationDelta", {
   expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, 
                                     data = TestData)$PopulationDelta)[1]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[1]),
-               tolerance = 0.1)
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[1]))
   # test estimated treatment value
   expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                     instrumentFormula = ~ Instrument, 
                                     data = TestData)$PopulationDelta)[2]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[2]),
-               tolerance = 0.1)
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[2]))
   # test estimated covariate value
   expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
                                                instrumentFormula = ~ Instrument, 
                                                data = TestData)$PopulationDelta)[3]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[3]),
-               tolerance = 0.2)
+               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[3]))
 })
 
 
