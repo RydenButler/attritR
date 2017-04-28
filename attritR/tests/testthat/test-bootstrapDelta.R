@@ -127,22 +127,19 @@ test_that("bootstrapDelta returns right mean values for population", {
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MeanEst$Pop, 
-               expected = Sim.Means$Pop,
-               tolerance = 0.01)
+               expected = Sim.Means$Pop)
   # Median estimate
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MedianEst$Pop,
-               expected = Sim.Medians$Pop,
-               tolerance = 0.01)
+               expected = Sim.Medians$Pop)
   # Quantiles
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$Quantiles$Pop,
-               expected = Sim.Quantiles$Pop,
-               tolerance = 0.01)
+               expected = Sim.Quantiles$Pop)
 })
 
 test_that("bootstrapDelta returns right mean values for respondents", {
@@ -152,22 +149,19 @@ test_that("bootstrapDelta returns right mean values for respondents", {
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MeanEst$Resp,
-               expected = Sim.Means$Resp,
-               tolerance = 0.01)
+               expected = Sim.Means$Resp)
   # Median estimate
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MedianEst$Resp,
-               expected = Sim.Medians$Resp,
-               tolerance = 0.01)
+               expected = Sim.Medians$Resp)
   # Quantiles
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$Quantiles$Resp,
-               expected = Sim.Quantiles$Resp,
-               tolerance = 0.01)
+               expected = Sim.Quantiles$Resp)
 })
 
 
