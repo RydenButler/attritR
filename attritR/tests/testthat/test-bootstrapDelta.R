@@ -31,62 +31,145 @@ Test.Weightlist <- calculateWeights(modelData = SimData,
                                     PiFormula = D ~.,
                                     PiMethod = binomial(link = logit))
 
-# Check BoootstrapDelta
-BootSim.both <- bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                               instrumentFormula = ~ Instrument, 
-                               data = SimData,
-                               effectType = 'Both') # default: effectType ='Population'
-BootSim.both$MeanEst
-
 # Bootstrap data: manual sampling of dataset with replacement
 Sim.BootsList <- list()
-for(i in 1:1000) {Sim.BootsList[[i]] = SimData[sample(nrow(SimData), 1000, replace  = T),]}
-
-
+for(i in 1:1000) {Sim.BootsList[[i]] = SimData[sample(x = nrow(SimData), 
+                                                      size = 1000, 
+                                                      replace  = TRUE),]}
+# Calculate estimates
 Sim.Estimates <- list()
-
-Sim.Estimates$Resp <- sapply(
-                      X = Sim.BootsList, 
-                      FUN = function(x) estimateDelta(regressionFormula = 
-                                            unY ~ Treatment + Covariate,
-                                            instrumentFormula = ~ Instrument,
-                                            data = x)$RespondentDelta$coefficients)
-
+Sim.Estimates$Resp <- sapply(X = Sim.BootsList, 
+                             FUN = function(x) estimateDelta(regressionFormula = unY ~ Treatment + Covariate,
+                                                             instrumentFormula = ~ Instrument,
+                                                             data = x)$RespondentDelta$coefficients)
 Sim.Estimates$Pop <- sapply(X = Sim.BootsList, 
-                                      FUN = function(x) estimateDelta(regressionFormula = 
-                                      unY ~ Treatment + Covariate,
+                            FUN = function(x) estimateDelta(regressionFormula = unY ~ Treatment + Covariate,
                                       instrumentFormula = ~ Instrument,
                                       data = x)$PopulationDelta$coefficients)
 
-    # Calculate results: mean, median, and standard errors, based on bootstrapped replications
-    Sim.SEs <- lapply(Sim.Estimates, function(x) apply(x, 1, sd))
-    Sim.Means <- lapply(Sim.Estimates, rowMeans)
-    Sim.Medians <- lapply(Sim.Estimates, function(x) apply(x, 1, median))
-    Sim.Quantiles <- lapply(Sim.Estimates, function(x) apply(x, 1, function(y) quantile(y, quantiles, na.rm=T)))
+# Calculate results: mean, median, and standard errors, based on bootstrapped replications
+# create basic functions
+SE.fun <- function(x) sd(x)/sqrt(length(x)) # standard error
+Quantile.fun <- function(x) quantile(x, probs = c(0.05, 0.95), na.rm=TRUE) # quantile function
 
-    # return list with mean, median, and standard error of estimated for treatment and control
-    return(list(Sim.MeanEst = Sim.Means, 
-                Sim.MedianEst = Sim.Medians, 
-                Sim.SE = Sim.SEs,
-                Sim.Quantiles = Sim.Quantiles,
-                Sim.Matrix = Sim.Estimates)    )
+# apply to the list of simulation estimates
+# mean
+Sim.Means <- lapply(X = Sim.Estimates, FUN = rowMeans)
+# median
+Sim.Medians <- lapply(X = Sim.Estimates, 
+                      FUN = function(x) apply(X = x, 
+                                              MARGIN = 1, 
+                                              FUN = median))
+# standard error
+Sim.SE <- lapply(X = Sim.Estimates, 
+                 FUN = function(x) apply(X = x, 
+                                         MARGIN = 1, 
+                                         FUN = SE.fun))
+# 5% and 95% quantile
+Sim.Quantiles <- lapply(X = Sim.Estimates, 
+                        FUN = function(x) apply(X = x, 
+                                                MARGIN = 1, 
+                                                FUN = Quantile.fun))
 
+#=======================================================================
+# Delete in the final version 
+#=======================================================================
+all.equal(Sim.Means$Pop, BootSim.both$MeanEst$Pop)
+all.equal(Sim.Means$Resp, BootSim.both$MeanEst$Resp)
+### "Mean relative difference: 0.003203344"
+### "Mean relative difference: 0.001747106"
 
+all.equal(Sim.Medians$Pop, BootSim.both$MedianEst$Pop)
+all.equal(Sim.Medians$Resp, BootSim.both$MedianEst$Resp)
+### "Mean relative difference: 0.003362914"
+### "Mean relative difference: 0.00116525"
+
+all.equal(Sim.SE$Pop, BootSim.both$SE$Pop)
+all.equal(Sim.SE$Resp, BootSim.both$SE$Resp)
+### "Mean relative difference: 30.01675"
+### "Mean relative difference: 30.39107"
+
+# FOR LATER USE: testing for Standard error 
+expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                     instrumentFormula = ~ Instrument, 
+                                     data = SimData,
+                                     effectType = 'Both')$SE$Pop, # default: effectType = 'Population'
+             expected = Sim.SE$Pop,
+             tolerance = 40)
+# Standard error
+expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                     instrumentFormula = ~ Instrument, 
+                                     data = SimData,
+                                     effectType = 'Both')$SE$Resp,
+             expected = Sim.SE$Resp,
+             tolerance = 40)
+
+all.equal(Sim.Quantiles$Pop, BootSim.both$Quantiles$Pop)
+all.equal(Sim.Quantiles$Resp, BootSim.both$Quantiles$Resp)
+### "Mean relative difference: 0.009784695"
+### "Mean relative difference: 0.00814859"
+
+all.equal(Sim.Estimates$Pop, BootSim.both$Matrix$Pop)
+all.equal(Sim.Estimates$Resp, BootSim.both$Matrix$Resp)
+### "Mean relative difference: 0.1318351"
+### "Mean relative difference: 0.09498287"
+#=======================================================================
 
 
 
 #==================
 # Unit testing:
 #===================
-test_that("bootstrapDelta returns right mean values", {
+test_that("bootstrapDelta returns right mean values for population", {
   # does the function produce right values?
-  expect_equal(object = ,
-               expected = 
-  )
-  expect_equal(object = ,
-               expected = 
-  )
+  # Mean estimate for treatment and control among population
+  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = SimData,
+                                       effectType = 'Both')$MeanEst$Pop, 
+               expected = Sim.Means$Pop,
+               tolerance = 0.01)
+  # Median estimate
+  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = SimData,
+                                       effectType = 'Both')$MedianEst$Pop,
+               expected = Sim.Medians$Pop,
+               tolerance = 0.01)
+  # Quantiles
+  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = SimData,
+                                       effectType = 'Both')$Quantiles$Pop,
+               expected = Sim.Quantiles$Pop,
+               tolerance = 0.01)
 })
+
+test_that("bootstrapDelta returns right mean values for respondents", {
+  # does the function produce right values?
+  # Mean estimate  for treatment and control among respondents
+  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = SimData,
+                                       effectType = 'Both')$MeanEst$Resp,
+               expected = Sim.Means$Resp,
+               tolerance = 0.01)
+  # Median estimate
+  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = SimData,
+                                       effectType = 'Both')$MedianEst$Resp,
+               expected = Sim.Medians$Resp,
+               tolerance = 0.01)
+  # Quantiles
+  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+                                       instrumentFormula = ~ Instrument, 
+                                       data = SimData,
+                                       effectType = 'Both')$Quantiles$Resp,
+               expected = Sim.Quantiles$Resp,
+               tolerance = 0.01)
+})
+
 
 # SAVED TESTS FOR LATER TESTS ---------------------------------------------------------------
 ## tests:
