@@ -120,48 +120,68 @@ all.equal(Sim.Estimates$Resp, BootSim.both$Matrix$Resp)
 #==================
 # Unit testing:
 #===================
-test_that("bootstrapDelta returns right mean values for population", {
-  # does the function produce right values?
-  # Mean estimate for treatment and control among population
+
+# Unit testing for POPULATION estimates ---------------------------------
+## testing mean value
+test_that("bootstrapDelta returns correct mean values for population", {
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MeanEst$Pop, 
-               expected = Sim.Means$Pop)
-  # Median estimate
+               expected = Sim.Means$Pop,
+    tolerance = .01)
+  })
+
+# Testing Median values
+test_that("bootstrapDelta returns correct median values for population", {
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MedianEst$Pop,
-               expected = Sim.Medians$Pop)
-  # Quantiles
+               expected = Sim.Medians$Pop,
+    tolerance = .01)
+})
+
+# Testing Quantiles values
+test_that("bootstrapDelta returns correct quantile values for population", {
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$Quantiles$Pop,
-               expected = Sim.Quantiles$Pop)
+               expected = Sim.Quantiles$Pop,
+    tolerance = .02)
 })
 
-test_that("bootstrapDelta returns right mean values for respondents", {
-  # does the function produce right values?
-  # Mean estimate  for treatment and control among respondents
+# Unit testing for RESPONDENT estimates ---------------------------------
+
+# Testing mean values
+test_that("bootstrapDelta returns correct mean values for respondents", {
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MeanEst$Resp,
-               expected = Sim.Means$Resp)
-  # Median estimate
-  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
+               expected = Sim.Means$Resp,
+    tolerance = .01)
+})
+
+# Testing Median values
+test_that("bootstrapDelta returns correct median values for respondents", {
+    expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$MedianEst$Resp,
-               expected = Sim.Medians$Resp)
-  # Quantiles
+      expected = Sim.Medians$Resp,
+      tolerance = .01)
+})
+
+# Testing quantile values
+test_that("bootstrapDelta returns correct median values for respondents", {
   expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
                                        instrumentFormula = ~ Instrument, 
                                        data = SimData,
                                        effectType = 'Both')$Quantiles$Resp,
-               expected = Sim.Quantiles$Resp)
+               expected = Sim.Quantiles$Resp,
+    tolerance = .01)
 })
 
 
