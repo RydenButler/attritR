@@ -75,7 +75,7 @@ calculateWeights <- function(modelData,
                                         method = p_W_Method
                                         )
   # Calculate inverse probabilities p(D = 0, X, Z)
-  modelData[modelData$D != 1, ]$p_W_Fits <- (1 - modelData)[modelData$D != 1, ]$p_W_Fits
+  modelData[modelData$D != 1, ]$p_W_Fits <- (1 - modelData[modelData$D != 1, ]$p_W_Fits)
   
   # Regress D on X + p(W)
   Pi_Fits <- probabilityFits(formula = PiFormula,
@@ -105,7 +105,6 @@ probabilityFits <- function(formula,
                                family = method,
                                data = modelData,
                                maxit = 1000),
-                  newdata = modelData,
                   type = 'response')
   return(Fits)
 }

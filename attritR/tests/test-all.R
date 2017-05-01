@@ -1,2 +1,2 @@
 library(testthat)
-test_check("ATTR")
+test_check("attritR")

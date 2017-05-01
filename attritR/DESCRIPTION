@@ -21,4 +21,5 @@ Collate:
   'estimateDelta.R'
   'bootstrapDelta.R'
   'ATE.R'
+  'data.R'
 
