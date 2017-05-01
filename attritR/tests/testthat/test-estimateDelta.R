@@ -1,110 +1,39 @@
 context("estimateDelta")
 
-## Estimating delta without using the estimateDelta function:
+data('SimulatedAttrition')
 
-### Create simulation data, SimData:
-library(MASS)
-set.seed(12345)
-
-Treatment <- rbinom(n = 1000, size = 1, prob = 0.5)
-Covariate <- runif(n = length(Treatment), min = -1, max = 1)
-Instrument <- runif(n = length(Treatment), min = -1, max = 2)
-
-# For attrition on unobservables
-UV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
-U <- UV[ , 1]
-V <- UV[ , 2]
-
-Y <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + U
-R <- 1*Treatment + 1*Covariate + 0*Instrument + V > 0
-Y[!R] <- NA
-
-SimData <- data.frame(Y,Treatment,Covariate,Instrument)
-
-## Functions for fitting and working with generalized additive model are required.
-library(gam)
-
-
-TestData <- SimData
-
-# Calculate weights:
-TestData[ ,1] <- ifelse(is.na(TestData[,1]) == TRUE, 0, 1) 
-names(TestData)[1] <- c('Response')
-TestData$p_W_Fits <- predict(object = glm(formula = Response ~ Treatment + Covariate + Instrument, 
-                                          family = binomial(link = logit),
-                                          data = TestData,
-                                          maxit = 1000),
-                             newdata = TestData,
-                             type = 'response')
-TestData[TestData$Treatment == 0, ]$p_W_Fits <- (1 - TestData)[TestData$Treatment==0, ]$p_W_Fits
-Test.Pi_Fits <- predict(object = glm(formula = Treatment ~ Covariate + p_W_Fits,
-                                     family = binomial(link = logit),
-                                     data = TestData,
-                                     maxit = 1000),
-                        newdata = TestData,
-                        type = 'response')
-Test.Pi_Fits[TestData$Treatment== 0] <- (1 - Test.Pi_Fits[TestData$Treatment==0])
-Test.AllWeights <- TestData$p_W_Fits * Test.Pi_Fits
-Test.WeightList <- list(pW = TestData$p_W_Fits, 
-                        Pi = Test.Pi_Fits,
-                        pWxPi = Test.AllWeights)
-
-# add estimated 'Pi'and 'pWxPi" to TestData
-TestData$Pi <- Test.WeightList$Pi
-TestData$pWxPi <- Test.WeightList$pWxPi
+# Calculate weights
+Weights <- calculateWeights(modelData = SimulatedAttrition[,1:3], 
+                       instrumentData = SimulatedAttrition[ , 4])
   
 # Estimate Proposition 4:
-Test.RespondentModel <- lm(formula = Y ~ Treatment + Covariate,
-                           weights = 1/Pi,
-                           data = TestData)
+Test.RespondentModel <- lm(formula = Y ~ D + X,
+                           weights = 1/Weights$Pi,
+                           data = SimulatedAttrition)
 
 # Estimate Proposition 5:
-Test.PopulationModel <- lm(formula = Y ~ Treatment + Covariate,
-                    weights = 1/pWxPi,
-                    data = TestData)
-
-# Final output of estimateDelta:  
-Test.Delta <- list(RespondentDelta = Test.RespondentModel,
-                   PopulationDelta = Test.PopulationModel)
-
+Test.PopulationModel <- lm(formula = Y ~ D + X,
+                    weights = 1/Weights$pWxPi,
+                    data = SimulatedAttrition)
 
 # Unit Testing ###############################################
 # ============================================================
 
-# test estimated values for RespondentDelta
+# test estimates for Respondent ATE
 test_that("estimateDelta returns correct values for RespondentDelta", {
-  # test estimated intercept value
-  expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-                                    instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[1],
-               expected = unlist(Test.Delta$RespondentDelta)[1], tolerance = 0.00001)
-  # test estimated treatment value
-  expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-    instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[2],
-    expected = unlist(Test.Delta$RespondentDelta)[2], tolerance = 0.00001)
-  # test estimated covariate values
-  expect_equal(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-    instrumentFormula = ~ Instrument, data = TestData)$RespondentDelta)[3],
-    expected = unlist(Test.Delta$RespondentDelta)[3], tolerance = 0.00001)
-})
+  expect_equal(coef(estimateDelta(regressionFormula = Y ~ D + X, 
+                                  instrumentFormula = ~ Z, 
+                                  data = SimulatedAttrition)$RespondentDelta),
+               expected = coef(Test.RespondentModel))
+  })
 
-# test estimated values for AllDelta
+# test estimates for Population ATE
 test_that("estimateDelta returns correct values for PopulationDelta", {
-  # test estimated intercept value
-  expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-                                    instrumentFormula = ~ Instrument, 
-                                    data = TestData)$PopulationDelta)[1]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[1]), tolerance = 0.00001)
-  # test estimated treatment value
-  expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-                                    instrumentFormula = ~ Instrument, 
-                                    data = TestData)$PopulationDelta)[2]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[2]), tolerance = 0.00001)
-  # test estimated covariate value
-  expect_equal(as.numeric(unlist(estimateDelta(regressionFormula = Y ~ Treatment + Covariate, 
-                                               instrumentFormula = ~ Instrument, 
-                                               data = TestData)$PopulationDelta)[3]),
-               expected = as.numeric(unlist(Test.Delta$PopulationDelta)[3]), tolerance = 0.00001)
-})
+  expect_equal(coef(estimateDelta(regressionFormula = Y ~ D + X, 
+                                  instrumentFormula = ~ Z, 
+                                  data = SimulatedAttrition)$PopulationDelta),
+               expected = coef(Test.PopulationModel))
+  })
 
 
 # STEPS BELOW SAVED FOT LATER TESTS ------------------------------------------

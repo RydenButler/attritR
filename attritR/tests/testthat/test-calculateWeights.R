@@ -1,7 +1,6 @@
 context("calculateWeights")
 context("probabilityFits")
 
-library(gam)
 data("SimulatedAttrition")
 
 # For testing probabilityFits function:
