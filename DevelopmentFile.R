@@ -53,13 +53,14 @@ library(MASS)
 Current <- as.package('attritR')
 load_all(Current)
 document(Current)
+data("SimulatedAttrition")
 
 # This will tak a moment ...
 demo(plotAttrition)
 demo(plotInteraction)
 
 ### Check Propositions 4 and 5:
-data("SimulatedAttrition")
+
 # weights
 Weights <- calculateWeights(modelData = SimulatedAttrition[,1:3], 
                              instrumentData = SimulatedAttrition[ , 4])
@@ -70,14 +71,14 @@ Delta <- estimateDelta(Y ~ D + X,
                         data = SimulatedAttrition)
 
 # bootstrap
-Boot <- bootstrapDelta(Y ~ D, 
+Boot <- bootstrapDelta(Y ~ D + X, 
                         instrumentFormula = ~ Z, 
                         data = SimulatedAttrition,
                         effectType = 'Both',
                         nCores = 4)
-Boot$MeanEst
+Boot$Means
 
-ATE(Y ~ D, 
+ATE(Y ~ D + X, 
     instrumentFormula = ~ Z, 
     data = SimulatedAttrition,
     effectType = 'Both',
@@ -85,9 +86,9 @@ ATE(Y ~ D,
 
 ### Check Proposition 6:
 ATE(Y ~ D,
-    ~ Z,
-    SimulatedAttrition,
-    'Both',
+    instrumentFormula = ~ Z,
+    data = SimulatedAttrition,
+    effectType = 'Both',
     nCores = 4)
 
 ### Check GAM arguments
@@ -100,23 +101,23 @@ WeightsGAM <- calculateWeights(modelData = SimulatedAttrition[ , 1:3],
 ### Efficieny checks ###
 library(microbenchmark)
 # Check parallel bootstrap
-# It's not clear that parallel saves any time
-microbenchmark(bootstrapDelta(Y ~ Treatment + Covariate, 
-                              instrumentFormula = ~ Instrument, 
+# 4 core parallel is down to 6 seconds. sapplysin bootstrap works best without parallel
+microbenchmark(bootstrapDelta(Y ~ D + X, 
+                              instrumentFormula = ~ Z, 
                               data = SimulatedAttrition,
-                              effectType = 'All',
+                              effectType = 'Both',
                               nCores = 4),
-               bootstrapDelta(Y ~ Treatment + Covariate, 
-                              instrumentFormula = ~ Instrument, 
+               bootstrapDelta(Y ~ D + X, 
+                              instrumentFormula = ~ Z, 
                               data = SimulatedAttrition,
-                              effectType = 'All',
+                              effectType = 'Both',
                               nCores = 1),
-               times = 10)
+               times = 1)
 
 test <- lineprof(bootstrapDelta(Y ~ Treatment + Covariate, 
                                 instrumentFormula = ~ Instrument, 
                                 data = ObsData,
-                                effectType = 'All',
+                                effectType = 'Both',
                                 nCores = 4))
 shine(test)
 

@@ -105,45 +105,47 @@ bootstrapDelta <- function(regressionFormula,
                                                        replace = T), ]
   )
   
-  Estimates <- list()
+  Estimates <- parLapply(BootsCluster, BootsList, 
+                         fun = function(x) estimateDelta(regressionFormula = regressionFormula,
+                                                           instrumentFormula = instrumentFormula,
+                                                           data = x))
+  Means = list()
+  Medians = list()
+  SD = list()
+  Quants = list()
+  Matrix = list()
   
   if(effectType == 'Respondent' | effectType == 'Both'){
-    Estimates$Resp <- parSapply(BootsCluster, BootsList, 
-                            FUN = function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                            instrumentFormula = instrumentFormula,
-                                                            data = x
-                            )$RespondentDelta$coefficients
-    )
+    # Extract coefs for respondent estimates
+    Matrix$Resp <- sapply(Estimates, 
+                             FUN = function(x) x$RespondentDelta$coefficients
+                             )
+    # Calculate relevant statistics
+    Means$Resp <- rowMeans(Matrix$Resp)
+    Medians$Resp <- apply(Matrix$Resp, 1, median)
+    SD$Resp <- apply(Matrix$Resp, 1, sd)
+    Quants$Resp <- apply(Matrix$Resp, 1, function(x) quantile(x, quantiles))
   } 
   if(effectType == 'Population' | effectType == 'Both'){
-    Estimates$Pop <- parSapply(BootsCluster, BootsList, 
-                            function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                      instrumentFormula = instrumentFormula,
-                                                      data = x
-                            )$PopulationDelta$coefficients
-    )
+    # Extract coefs for population estimates
+    Matrix$Pop <- sapply(Estimates, 
+                                   FUN = function(x) x$PopulationDelta$coefficients
+                            )
+    # Calculate relevant statistics
+    Means$Pop <- rowMeans(Matrix$Pop)
+    Medians$Pop <- apply(Matrix$Pop, 1, median)
+    SD$Pop <- apply(Matrix$Pop, 1, sd)
+    Quants$Pop <- apply(Matrix$Pop, 1, function(x) quantile(x, quantiles))
   } 
   
-  # Calculate results: mean, median, and standard errors, based on bootstrapped replications
-  SEs <- lapply(Estimates, function(x) apply(x, 1, sd))
-  Means <- lapply(Estimates, rowMeans)
-  Medians <- lapply(Estimates, function(x) apply(x, 1, median))
-  # Note that the bootstrapping results in some NA coefficient estimates (colinearity? too much missingness?)
-  # As a result, na.rm is required here for the quantiles (though strangely, not for the other functions)
-  # This is unnecessary with larger sample sizes, and may disappear with additional noise
-  # All efforts should be taken to have na.rm == F, as wanton removal of NAs can gloss over major errors
-  # If na.rm must be true, we should include a warning message if NAs are found in the CoefMatrix
-  # Additionally we may want an error thrown if the number of NAs exceeds some tolerable threshold
-  # Currently the NA problem appears more frequently (possibly exclusively) when calculating the ATE
-  Quantiles <- lapply(Estimates, function(x) apply(x, 1, function(y) quantile(y, quantiles, na.rm=T)))
   # Stopping the cluster
   stopCluster(BootsCluster)
-  # return list with mean, median, and standard error of estimated for treatment and control
-  return(list(MeanEst = Means, 
-              MedianEst = Medians, 
-              SE = SEs,
-              Quantiles = Quantiles,
-              Matrix = Estimates,
+  # return list with relevant statistics and data
+  return(list(Means = Means, 
+              Medians = Medians, 
+              SD = SD,
+              Quants = Quants,
+              Matrix = Matrix,
               Data = BootsList
   )
   )

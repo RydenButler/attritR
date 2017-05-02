@@ -1,120 +1,42 @@
 context("bootstrapDelta")
 
-## Create simulation data:
-library(MASS)
-set.seed(12345)
+data('SimulatedAttrition')
 
-Treatment <- rbinom(n = 1000, size = 1, prob = 0.5)
-Covariate <- runif(n = length(Treatment), min = -1, max = 1)
-Instrument <- runif(n = length(Treatment), min = -1, max = 2)
+# Run function to generate bootstraps and estimates
+TestBoot <- bootstrapDelta(Y ~ D + X, 
+                       instrumentFormula = ~ Z, 
+                       data = SimulatedAttrition,
+                       effectType = 'Both',
+                       nCores = 4)
 
-# For attrition on unobservables
-unUV <- mvrnorm(n = 1000, mu = c(0,0), Sigma = matrix(c(1, 0.8, 0.8, 1), nrow = 2))
-unU <- unUV[ , 1]
-unV <- unUV[ , 2]
+# Manually estimate delta from each bootstrapped dataset
+Test.Estimates <- lapply(X = TestBoot$Data, 
+                         FUN = function(x) estimateDelta(regressionFormula = Y ~ D + X,
+                                                         instrumentFormula = ~ Z,
+                                                         data = x))
+# Calculate relevant statistics for respondent delta
+Test.Respondent <- sapply(X = Test.Estimates,
+                           FUN = function(x) coef(x$RespondentDelta))
 
-unY <- 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + unU
-unR <- 0.5*Treatment + 0.5*Covariate + 1*Instrument + unV > 0
-unY[!unR] <- NA
+Mean.Respondent <- rowMeans(Test.Respondent)
 
-SimData <- data.frame(unY, Treatment, Covariate, Instrument)
+Median.Respondent <- apply(Test.Respondent, 1, median)
 
+SE.Respondent <- apply(Test.Respondent, 1, sd)
 
-## Functions for fitting and working with generalized additive model are required.
-library(gam)
+Quant.Respondent <- apply(Test.Respondent, 1, function(x) quantile(x, c(0.05, 0.95)))
 
-# Calculate weights for SimData:
-Test.Weightlist <- calculateWeights(modelData = SimData,
-                                    instrumentData = Instrument,
-                                    p_W_Formula = R ~.,
-                                    p_W_Method = binomial(link = logit),
-                                    PiFormula = D ~.,
-                                    PiMethod = binomial(link = logit))
+# Calculate relevant statistics for population delta
+Test.Population <- sapply(X = Test.Estimates,
+                           FUN = function(x) coef(x$PopulationDelta))
 
-# Bootstrap data: manual sampling of dataset with replacement
-Sim.BootsList <- list()
-for(i in 1:1000) {Sim.BootsList[[i]] = SimData[sample(x = nrow(SimData), 
-                                                      size = 1000, 
-                                                      replace  = TRUE),]}
-# Calculate estimates
-Sim.Estimates <- list()
-Sim.Estimates$Resp <- sapply(X = Sim.BootsList, 
-                             FUN = function(x) estimateDelta(regressionFormula = unY ~ Treatment + Covariate,
-                                                             instrumentFormula = ~ Instrument,
-                                                             data = x)$RespondentDelta$coefficients)
-Sim.Estimates$Pop <- sapply(X = Sim.BootsList, 
-                            FUN = function(x) estimateDelta(regressionFormula = unY ~ Treatment + Covariate,
-                                      instrumentFormula = ~ Instrument,
-                                      data = x)$PopulationDelta$coefficients)
+Mean.Population <- rowMeans(Test.Population)
 
-# Calculate results: mean, median, and standard errors, based on bootstrapped replications
-# create basic functions
-SE.fun <- function(x) sd(x)/sqrt(length(x)) # standard error
-Quantile.fun <- function(x) quantile(x, probs = c(0.05, 0.95), na.rm=TRUE) # quantile function
+Median.Population <- apply(Test.Population, 1, median)
+  
+SE.Population <- apply(Test.Population, 1, sd)
 
-# apply to the list of simulation estimates
-# mean
-Sim.Means <- lapply(X = Sim.Estimates, FUN = rowMeans)
-# median
-Sim.Medians <- lapply(X = Sim.Estimates, 
-                      FUN = function(x) apply(X = x, 
-                                              MARGIN = 1, 
-                                              FUN = median))
-# standard error
-Sim.SE <- lapply(X = Sim.Estimates, 
-                 FUN = function(x) apply(X = x, 
-                                         MARGIN = 1, 
-                                         FUN = SE.fun))
-# 5% and 95% quantile
-Sim.Quantiles <- lapply(X = Sim.Estimates, 
-                        FUN = function(x) apply(X = x, 
-                                                MARGIN = 1, 
-                                                FUN = Quantile.fun))
-
-#=======================================================================
-# Delete in the final version 
-#=======================================================================
-all.equal(Sim.Means$Pop, BootSim.both$MeanEst$Pop)
-all.equal(Sim.Means$Resp, BootSim.both$MeanEst$Resp)
-### "Mean relative difference: 0.003203344"
-### "Mean relative difference: 0.001747106"
-
-all.equal(Sim.Medians$Pop, BootSim.both$MedianEst$Pop)
-all.equal(Sim.Medians$Resp, BootSim.both$MedianEst$Resp)
-### "Mean relative difference: 0.003362914"
-### "Mean relative difference: 0.00116525"
-
-all.equal(Sim.SE$Pop, BootSim.both$SE$Pop)
-all.equal(Sim.SE$Resp, BootSim.both$SE$Resp)
-### "Mean relative difference: 30.01675"
-### "Mean relative difference: 30.39107"
-
-# FOR LATER USE: testing for Standard error 
-expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                     instrumentFormula = ~ Instrument, 
-                                     data = SimData,
-                                     effectType = 'Both')$SE$Pop, # default: effectType = 'Population'
-             expected = Sim.SE$Pop,
-             tolerance = 40)
-# Standard error
-expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                     instrumentFormula = ~ Instrument, 
-                                     data = SimData,
-                                     effectType = 'Both')$SE$Resp,
-             expected = Sim.SE$Resp,
-             tolerance = 40)
-
-all.equal(Sim.Quantiles$Pop, BootSim.both$Quantiles$Pop)
-all.equal(Sim.Quantiles$Resp, BootSim.both$Quantiles$Resp)
-### "Mean relative difference: 0.009784695"
-### "Mean relative difference: 0.00814859"
-
-all.equal(Sim.Estimates$Pop, BootSim.both$Matrix$Pop)
-all.equal(Sim.Estimates$Resp, BootSim.both$Matrix$Resp)
-### "Mean relative difference: 0.1318351"
-### "Mean relative difference: 0.09498287"
-#=======================================================================
-
+Quant.Population <- apply(Test.Population, 1, function(x) quantile(x, c(0.05, 0.95)))
 
 
 #==================
@@ -122,67 +44,30 @@ all.equal(Sim.Estimates$Resp, BootSim.both$Matrix$Resp)
 #===================
 
 # Unit testing for POPULATION estimates ---------------------------------
-## testing mean value
-test_that("bootstrapDelta returns correct mean values for population", {
-  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                       instrumentFormula = ~ Instrument, 
-                                       data = SimData,
-                                       effectType = 'Both')$MeanEst$Pop, 
-               expected = Sim.Means$Pop,
-    tolerance = .01)
+test_that("bootstrapDelta returns correct values for population", {
+  expect_equal(TestBoot$Means$Pop, 
+               expected = Mean.Population)
+  expect_equal(TestBoot$Medians$Pop, 
+               expected = Median.Population)
+  expect_equal(TestBoot$SD$Pop, 
+               expected = SE.Population)
+  expect_equal(TestBoot$Quants$Pop, 
+               expected = Quant.Population)
   })
-
-# Testing Median values
-test_that("bootstrapDelta returns correct median values for population", {
-  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                       instrumentFormula = ~ Instrument, 
-                                       data = SimData,
-                                       effectType = 'Both')$MedianEst$Pop,
-               expected = Sim.Medians$Pop,
-    tolerance = .01)
-})
-
-# Testing Quantiles values
-test_that("bootstrapDelta returns correct quantile values for population", {
-  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                       instrumentFormula = ~ Instrument, 
-                                       data = SimData,
-                                       effectType = 'Both')$Quantiles$Pop,
-               expected = Sim.Quantiles$Pop,
-    tolerance = .02)
-})
 
 # Unit testing for RESPONDENT estimates ---------------------------------
 
 # Testing mean values
 test_that("bootstrapDelta returns correct mean values for respondents", {
-  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                       instrumentFormula = ~ Instrument, 
-                                       data = SimData,
-                                       effectType = 'Both')$MeanEst$Resp,
-               expected = Sim.Means$Resp,
-    tolerance = .01)
-})
-
-# Testing Median values
-test_that("bootstrapDelta returns correct median values for respondents", {
-    expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                       instrumentFormula = ~ Instrument, 
-                                       data = SimData,
-                                       effectType = 'Both')$MedianEst$Resp,
-      expected = Sim.Medians$Resp,
-      tolerance = .01)
-})
-
-# Testing quantile values
-test_that("bootstrapDelta returns correct median values for respondents", {
-  expect_equal(object = bootstrapDelta(regressionFormula = unY ~ Treatment + Covariate, 
-                                       instrumentFormula = ~ Instrument, 
-                                       data = SimData,
-                                       effectType = 'Both')$Quantiles$Resp,
-               expected = Sim.Quantiles$Resp,
-    tolerance = .01)
-})
+  expect_equal(TestBoot$Means$Resp, 
+               expected = Mean.Respondent)
+  expect_equal(TestBoot$Medians$Resp, 
+               expected = Median.Respondent)
+  expect_equal(TestBoot$SD$Resp, 
+               expected = SE.Respondent)
+  expect_equal(TestBoot$Quants$Resp, 
+               expected = Quant.Respondent)
+  })
 
 
 # SAVED TESTS FOR LATER TESTS ---------------------------------------------------------------

@@ -110,11 +110,11 @@ ATE <- function(regressionFormula,
   
   # Printing summary result tables
   if(effectType == "Population"){
-    ResultsPrint <- data.frame('Mean'=c(format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3)),
-                               'Median'=c(format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3)),
-                               'SE'=c(format(round(Results$SE$Pop[2], digit=3), nsmall=3)),
-                               'Lower 5%'=c(format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3)),
-                               'Upper 95%'=c(format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3)),
+    ResultsPrint <- data.frame('Mean'=c(format(round(Results$Means$Pop[2], digit=3), nsmall=3)),
+                               'Median'=c(format(round(Results$Medians$Pop[2], digit=3), nsmall=3)),
+                               'SD'=c(format(round(Results$SD$Pop[2], digit=3), nsmall=3)),
+                               'Lower 5%'=c(format(round(Results$Quants$Pop[1,2], digit=3), nsmall=3)),
+                               'Upper 95%'=c(format(round(Results$Quants$Pop[2,2], digit=3), nsmall=3)),
                                row.names = c("Population"),
                                check.names = FALSE)
       cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
@@ -123,11 +123,11 @@ ATE <- function(regressionFormula,
     invisible(Results)
   } 
   if(effectType == "Respondent"){
-    ResultsPrint <- data.frame('Mean'=c(format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3)),
-                               'Median'=c(format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3)),
-                               'SE'=c(format(round(Results$SE$Resp[2], digit=3), nsmall=3)),
-                               'Lower 5%'=c(format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3)),
-                               'Upper 95%'=c(format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3)),
+    ResultsPrint <- data.frame('Mean'=c(format(round(Results$Means$Resp[2], digit=3), nsmall=3)),
+                               'Median'=c(format(round(Results$Medians$Resp[2], digit=3), nsmall=3)),
+                               'SE'=c(format(round(Results$SD$Resp[2], digit=3), nsmall=3)),
+                               'Lower 5%'=c(format(round(Results$Quants$Resp[1,2], digit=3), nsmall=3)),
+                               'Upper 95%'=c(format(round(Results$Quants$Resp[2,2], digit=3), nsmall=3)),
                                row.names = c("Respondent"),
                                check.names = FALSE)
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
@@ -136,16 +136,16 @@ ATE <- function(regressionFormula,
     invisible(Results)
   }
   if(effectType == "Both"){  ## to do: aligning columns consistently
-    ResultsPrint <- data.frame('Mean'=c(format(round(Results$MeanEst$Resp[2], digit=3), nsmall=3),
-                                        format(round(Results$MeanEst$Pop[2], digit=3), nsmall=3)),
-                               'Median'=c(format(round(Results$MedianEst$Resp[2], digit=3), nsmall=3),
-                                          format(round(Results$MedianEst$Pop[2], digit=3), nsmall=3)),
-                               'SE'=c(format(round(Results$SE$Resp[2], digit=3), nsmall=3),
-                                      format(round(Results$SE$Pop[2], digit=3), nsmall=3)),
-                               'Lower 5%'=c(format(round(Results$Quantiles$Resp[1,2], digit=3), nsmall=3),
-                                            format(round(Results$Quantiles$Pop[1,2], digit=3), nsmall=3)),
-                               'Upper 95%'=c(format(round(Results$Quantiles$Resp[2,2], digit=3), nsmall=3),
-                                             format(round(Results$Quantiles$Pop[2,2], digit=3), nsmall=3)),
+    ResultsPrint <- data.frame('Mean'=c(format(round(Results$Means$Resp[2], digit=3), nsmall=3),
+                                        format(round(Results$Means$Pop[2], digit=3), nsmall=3)),
+                               'Median'=c(format(round(Results$Medians$Resp[2], digit=3), nsmall=3),
+                                          format(round(Results$Medians$Pop[2], digit=3), nsmall=3)),
+                               'SE'=c(format(round(Results$SD$Resp[2], digit=3), nsmall=3),
+                                      format(round(Results$SD$Pop[2], digit=3), nsmall=3)),
+                               'Lower 5%'=c(format(round(Results$Quants$Resp[1,2], digit=3), nsmall=3),
+                                            format(round(Results$Quants$Pop[1,2], digit=3), nsmall=3)),
+                               'Upper 95%'=c(format(round(Results$Quants$Resp[2,2], digit=3), nsmall=3),
+                                             format(round(Results$Quants$Pop[2,2], digit=3), nsmall=3)),
                                row.names = c("Respondent","Population"),
                                check.names = FALSE)
     cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
