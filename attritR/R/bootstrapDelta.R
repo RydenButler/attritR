@@ -124,7 +124,7 @@ bootstrapDelta <- function(regressionFormula,
     Means$Resp <- rowMeans(Matrix$Resp)
     Medians$Resp <- apply(Matrix$Resp, 1, median)
     SD$Resp <- apply(Matrix$Resp, 1, sd)
-    Quants$Resp <- apply(Matrix$Resp, 1, function(x) quantile(x, quantiles))
+    Quants$Resp <- apply(Matrix$Resp, 1, function(x) quantile(x, quantiles, na.rm = T))
   } 
   if(effectType == 'Population' | effectType == 'Both'){
     # Extract coefs for population estimates
@@ -135,7 +135,7 @@ bootstrapDelta <- function(regressionFormula,
     Means$Pop <- rowMeans(Matrix$Pop)
     Medians$Pop <- apply(Matrix$Pop, 1, median)
     SD$Pop <- apply(Matrix$Pop, 1, sd)
-    Quants$Pop <- apply(Matrix$Pop, 1, function(x) quantile(x, quantiles))
+    Quants$Pop <- apply(Matrix$Pop, 1, function(x) quantile(x, quantiles, na.rm = T))
   } 
   
   # Stopping the cluster

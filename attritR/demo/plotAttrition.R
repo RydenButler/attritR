@@ -63,10 +63,10 @@ plotAttrition <- function(N = 1000,
                                data = CurrentData,
                                effectType = 'Both',
                                nBoots = 10)
-    PopEst <- OurModel$MeanEst$Pop[2]
-    RespEst <- OurModel$MeanEst$Resp[2]
-    PopSE <- OurModel$SE$Pop[2]
-    RespSE <- OurModel$SE$Resp[2]
+    PopEst <- OurModel$Means$Pop[2]
+    RespEst <- OurModel$Means$Resp[2]
+    PopSE <- OurModel$SD$Pop[2]
+    RespSE <- OurModel$SD$Resp[2]
     return(list(OLSCoef = OLS[1], OLSSE = OLS[2], 
                 PopCoef = PopEst, PopSE = PopSE,
                 RespCoef = RespEst, RespSE = RespSE))
