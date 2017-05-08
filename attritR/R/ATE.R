@@ -79,7 +79,7 @@
 #'  in the bootstrapped sample corresponding with the column index.}
 #' @author Ryden Butler, David Miller, Jonas Markgraf, and Hyunjoo Oh
 #' 
-#' @rdname bootstrapDelta
+#' @rdname ATE
 #' @import 'parallel'
 #' @export
 
