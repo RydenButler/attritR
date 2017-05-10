@@ -46,6 +46,10 @@ By default this is binomial(link = logit). Other valid methods include those tha
 A list containing two elements, each of which is an \code{lm} object 
 containing estimates for the treatment effect and the effects of covariates included in
 \code{regressionFormula}.
+\item{RespondentDelta}{An \code{lm} object containing point estimates for the effects of treatment and
+relevant covariates on the outcome. These estimates are for the average treatment effect among respondents.}
+\item{PopulationDelta}{An \code{lm} object containing point estimates for the effects of treatment and
+relevant covariates on the outcome. These estimates are for the population average treatment effect.}
 }
 \description{
 \code{estimateDelta} estimates the average treatment effect (ATE) under conditions of
