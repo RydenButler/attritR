@@ -69,16 +69,16 @@ function.  See \code{parallel} for details.}
 }
 \value{
 A list of five elements containing the following:
- \item{MeanEst}{A list containing the mean estimated coefficients for the regression
+ \item{Means}{A list containing the mean estimated coefficients for the regression
  used to estimate the average treatment effect.  List will contain the estimates
  specified by the option \code{effectType}.}
- \item{MedianEst}{A list containing the median estimated coefficients for the regression
+ \item{Medians}{A list containing the median estimated coefficients for the regression
  used to estimate the average treatment effect.  List will contain the estimates
  specified by the option \code{effectType}.}
- \item{SE}{A list containing the mean estimated standard errors of the estimates
+ \item{SD}{A list containing the mean estimated standard errors of the estimates
  for the regression used to estimate the average treatment effect.  List will contain 
  the standard errors for the estimates specified by the option \code{effectType}.}
- \item{Quantiles}{A list containing the coefficient estimates for the regression
+ \item{Quants}{A list containing the coefficient estimates for the regression
  used to estimate the average treatment effect that correspond with the quantiles
  specified by \code{quantile}.  List will contain the quantiles specified by the option
   \code{effectType}.}

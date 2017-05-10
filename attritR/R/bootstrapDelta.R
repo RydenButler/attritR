@@ -50,13 +50,13 @@
 #'
 #' @return A list of six lists. If effectType = 'Both', each list contains two lists, otherwise
 #' each element consists of only one list.
-#'  \item{MeanEst}{A list containing a numeric vector of mean estimates for the effects of treatment and
+#'  \item{Means}{A list containing a numeric vector of mean estimates for the effects of treatment and
 #'  covariates of interest.}
-#'  \item{MedianEst}{A list containing a numeric vector of median estimates for the effects of treatment and
+#'  \item{Medians}{A list containing a numeric vector of median estimates for the effects of treatment and
 #'  covariates of interest.}
-#'  \item{SE}{A list containing a numeric vector of standard deviations for the estimated effects of treatment and
+#'  \item{SD}{A list containing a numeric vector of standard deviations for the estimated effects of treatment and
 #'  covariates of interest.}
-#'  \item{Quantiles}{A list containing a matrix of quantiles (rows) corresponding to the estimates
+#'  \item{Quants}{A list containing a matrix of quantiles (rows) corresponding to the estimates
 #'  for the treatment and covariate effects (columns). By defualt it returns quantiles corresponding to
 #'  the 5th and 95th percentiles.}
 #'  \item{Matrix}{A list containing a matrix of bootstrapped coefficient estimates, where each
