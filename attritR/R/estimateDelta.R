@@ -79,23 +79,65 @@ estimateDelta <- function(regressionFormula,
                                  PiFormula = PiFormula,
                                  PiMethod = PiMethod
                                  )
-
-  ModelData$Pi <- WeightList$Pi
-  ModelData$pWxPi <- WeightList$pWxPi
-
-  # Estimate Proposition 4:
-  RespondentModel <- lm(formula = regressionFormula,
-                 weights = 1/Pi,
-                 data = ModelData
-                 )
-  # Estimate Proposition 5:
-  PopulationModel <- lm(formula = regressionFormula,
-                 weights = 1/pWxPi,
-                 data = ModelData
-                 )
   
-  return(list(RespondentDelta = RespondentModel,
-              PopulationDelta = PopulationModel
+  # weights needed for Proposition 1
+  ModelData$pW_Obs_T <- WeightList$pW_Obs_T
+  
+  # weights needed for Proposition 2
+  ModelData$Pi_Obs_Resp <- NA
+  ModelData[!is.na(ModelData$Y),]$Pi_Obs_Resp <- WeightList$Pi_Obs_Resp
+  
+  # weights needed for Proposition 3
+  ModelData$pWxPi_Obs_T <- NA
+  ModelData[!is.na(ModelData$Y),]$pWxPi_Obs_T <- WeightList$pWxPi_Obs_T
+  
+  # weights needed for proposition 4
+  ModelData$Pi_Resp <- NA
+  ModelData[!is.na(ModelData$Y),]$Pi_Resp <- WeightList$Pi_Resp
+ 
+  # weights needed for Proposition 5
+  ModelData$pWxPi_Resp <- NA
+  ModelData[!is.na(ModelData$Y),]$pWxPi_Resp <- WeightList$pWxPi_Resp
+
+  
+  # Estimate Proposition 1:
+  Prop1 <- lm(formula = regressionFormula,
+              weights = 1/pW_Obs_T,
+              data = ModelData
+  )
+  # Estimate Proposition 2:
+  Prop2 <- lm(formula = regressionFormula,
+              weights = 1/Pi_Obs_Resp,
+              data = ModelData[!is.na(ModelData$Y),]
+  )
+  # Estimate Proposition 3:
+  Prop3 <- lm(formula = regressionFormula,
+              weights = 1/pWxPi_Obs_T,
+              data = ModelData[!is.na(ModelData$Y),]
+  )
+  # Estimate Proposition 4:
+  Prop4 <- lm(formula = regressionFormula,
+             weights = 1/Pi_Resp,
+             data = ModelData[!is.na(ModelData$Y),]
+             )
+  # Estimate Proposition 5:
+  Prop5 <- lm(formula = regressionFormula,
+              weights = 1/pWxPi_Resp,
+              data = ModelData[!is.na(ModelData$Y),]
+              )
+  
+  return(list(Prop1 = Prop1,
+              Prop2 = Prop2,
+              Prop3 = Prop3,
+              Prop4 = Prop4,
+              Prop5 = Prop5,
+              pW_Obs_T = WeightList$pW_Obs_T,
+              Pi_Obs_Resp = WeightList$Pi_Obs_Resp,
+              pWxPi_Obs_T = WeightList$pWxPi_Obs_T,
+              pW_Inst = WeightList$pW_Inst,
+              Pi_Resp = WeightList$Pi_Resp,
+              Pi_All = WeightList$Pi_All,
+              pWxPi_Resp = WeightList$pWxPi_Resp
               )
          )
 }

@@ -65,33 +65,67 @@ calculateWeights <- function(modelData,
   names(modelData)[1:2] <- c('R', 'D')
   
   # IMPORTANT NOTE:
-  ### This modelData must be structured as columns of Y, D, X, Z
+  ### This modelData must be structured as columns of Y, D, X, Z (when using Z)
   ### Otherwise the following calculations are incorrect
   
+  # Note: the p(W) and pi weights are calculated differently for each of the five 
+  # propositions, so we need to calculate each type of weight
+  
+  # calculating response propensity on treatment and observables (Props 1 and 3)
+  # Regress R on D + X; calculate fitted values
+  p_W_Fits_NoInst <- probabilityFits(formula = p_W_Formula,
+                                             # Since default formula is R ~ .
+                                             modelData = modelData,
+                                             method = p_W_Method
+  )
+  
+  # calculating treatment propensity given observables for respondents only (Prop 2)
+  # Regress D on X; calculate fitted values
+  Pi_Fits_Obs_Resp <- probabilityFits(formula = PiFormula,
+                                     # Since default formula is D ~ ., we remove R, while conditioning on R = 1
+                                     modelData = modelData[modelData$R==1 , -1],
+                                     method = p_W_Method
+  )
+  
+  # Treatment propensity scores
+  Pi_Fits_Obs_Resp[modelData[modelData$R==1, ]$D!=1] <-  (1 - Pi_Fits_Obs_Resp[modelData[modelData$R==1, ]$D!=1])
+  
+  # Product of response propensity and treatment propensity given observables (Prop 3)
+  
+  AllWeights_Obs <- p_W_Fits_NoInst[modelData$R==1]*Pi_Fits_Obs_Resp
+  
+  # calculations of treatment and response propensity when incorporating the instrument
+  # (Props 4 and 5)
+  
   # Regress R on D + X + Z; calculate fitted values
-  modelData$p_W_Fits <- probabilityFits(formula = p_W_Formula,
+  modelData$p_W_Fits_Inst <- probabilityFits(formula = p_W_Formula,
                                         # Since default formula is R ~ .
                                         modelData = data.frame(modelData, instrumentData),
                                         method = p_W_Method
                                         )
-  # Calculate inverse probabilities p(D = 0, X, Z)
-  modelData[modelData$D != 1, ]$p_W_Fits <- (1 - modelData[modelData$D != 1, ]$p_W_Fits)
   
+  # pi (treatment propensity scores) estimated for respondents only
+  # (Prop 4)
   # Regress D on X + p(W)
-  Pi_Fits <- probabilityFits(formula = PiFormula,
-                             # Since default formula is D ~ ., we remove R, while conditioning on R = 1
-                             modelData = modelData[ , -1],
-                             method = PiMethod
-                             )
-  # Treatment propensity scores
-  Pi_Fits[modelData$D != 1] <-  (1 - Pi_Fits[modelData$D != 1])
+  Pi_Fits_Resp <- probabilityFits(formula = PiFormula,
+                                 # Since default formula is D ~ ., we remove R, while conditioning on R = 1
+                                 modelData = modelData[modelData$R==1 , -1],
+                                 method = PiMethod
+                                 )
   
-  # Product of response propensity scores and treatment propensity scores
-  AllWeights <- modelData$p_W_Fits * Pi_Fits
+  # Treatment propensity scores
+  Pi_Fits_Resp[modelData[modelData$R==1, ]$D!=1] <-  (1 - Pi_Fits_Resp[modelData[modelData$R==1, ]$D!=1])
+  
+  # Product of response propensity scores and treatment propensity scores when using
+  # treatment propensity score for respondents only
+  AllWeights_Resp <- modelData[modelData$R==1, ]$p_W_Fits_Inst * Pi_Fits_Resp
 
-  return(list(pW = modelData$p_W_Fits,
-              Pi = Pi_Fits,
-              pWxPi = AllWeights
+  return(list(pW_Obs_T = p_W_Fits_NoInst,
+              Pi_Obs_Resp = Pi_Fits_Obs_Resp,
+              pWxPi_Obs_T = AllWeights_Obs,
+              pW_Inst = modelData$p_W_Fits_Inst,
+              Pi_Resp = Pi_Fits_Resp,
+              pWxPi_Resp = AllWeights_Resp
               )
          )
 }
