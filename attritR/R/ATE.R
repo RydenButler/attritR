@@ -92,7 +92,7 @@ ATE <- function(regressionFormula,
                             PiMethod = binomial(link = logit),
                             nBoots = 1000,
                             quantiles = c(0.05, 0.95),
-                            effectType = 'All',
+                            prop = "All",
                             nCores = 1
                             ) {
   
@@ -105,7 +105,7 @@ ATE <- function(regressionFormula,
                             PiMethod = PiMethod,
                             nBoots = nBoots,
                             quantiles = quantiles,
-                            effectType = effectType
+                            prop = prop
                             )
   
   # Printing summary result tables

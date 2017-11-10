@@ -7,7 +7,7 @@
 ATE(regressionFormula, instrumentFormula, data, p_W_Formula = R ~ .,
   p_W_Method = binomial(link = logit), PiFormula = D ~ .,
   PiMethod = binomial(link = logit), nBoots = 1000, quantiles = c(0.05,
-  0.95), effectType = "All", nCores = 1)
+  0.95), prop = "All", nCores = 1)
 }
 \arguments{
 \item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to
@@ -58,14 +58,14 @@ at which estimates of the average treatment effect will be returned.
 By default, \code{quantiles} are set to 0.05 and 0.95, which corresponds with a 90\%
 confidence interval.}
 
+\item{nCores}{Numeric value indicating the number of cores to allocate to running the
+function.  See \code{parallel} for details.}
+
 \item{effectType}{Character string indicating the type of effect types to be calculated
 and returned.  Valid inputs are 'Respondent,' which calculates the average treatment
 effect only among respondents; 'Population,' which calculates the average treatment effect
 among all subjects; and 'All,' which calculates both the average treatment effect only
 only among respondents, and among all subjects.}
-
-\item{nCores}{Numeric value indicating the number of cores to allocate to running the
-function.  See \code{parallel} for details.}
 }
 \value{
 A list of five elements containing the following:
