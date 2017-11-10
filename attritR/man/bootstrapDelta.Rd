@@ -7,7 +7,7 @@
 bootstrapDelta(regressionFormula, instrumentFormula, data, p_W_Formula = R ~
   ., p_W_Method = binomial(link = logit), PiFormula = D ~ .,
   PiMethod = binomial(link = logit), nBoots = 1000, quantiles = c(0.05,
-  0.95), effectType = "Population", nCores = 1)
+  0.95), prop = "All", nCores = 1)
 }
 \arguments{
 \item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to
@@ -49,13 +49,13 @@ of bootstrap replications is 1,000.}
 \item{quantiles}{A vector of percentiles for which the bootstrapped quantiles will be returned.
 By default the function returns the quantiles corresponding to the 5th and 95th percentiles.}
 
-\item{effectType}{A string of either 'Population', 'Respondent', or 'Both', corresponding
+\item{prop}{A string of either 'Population', 'Respondent', or 'Both', corresponding
 to the desired ATE calculation. By default, the function calculates the ATE on the population.}
 
 \item{nCores}{}
 }
 \value{
-A list of six lists. If effectType = 'Both', each list contains two lists, otherwise
+A list of six lists. If prop = 'Both', each list contains two lists, otherwise
 each element consists of only one list.
  \item{Means}{A list containing a numeric vector of mean estimates for the effects of treatment and
  covariates of interest.}

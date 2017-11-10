@@ -33,7 +33,7 @@
 #' of bootstrap replications is 1,000.
 #' @param quantiles A vector of percentiles for which the bootstrapped quantiles will be returned.
 #' By default the function returns the quantiles corresponding to the 5th and 95th percentiles.
-#' @param effectType A string of either 'Population', 'Respondent', or 'Both', corresponding
+#' @param prop A string of either 'Population', 'Respondent', or 'Both', corresponding
 #' to the desired ATE calculation. By default, the function calculates the ATE on the population.
 #' @param nCores
 #' 
@@ -48,7 +48,7 @@
 #' Social Experiments Under Alternative Forms of Attrition.", Journal of 
 #' Educational and Behavioral Statistics, vol. 37, no. 3, 443-474.
 #'
-#' @return A list of six lists. If effectType = 'Both', each list contains two lists, otherwise
+#' @return A list of six lists. If prop = 'Both', each list contains two lists, otherwise
 #' each element consists of only one list.
 #'  \item{Means}{A list containing a numeric vector of mean estimates for the effects of treatment and
 #'  covariates of interest.}
@@ -77,7 +77,7 @@ bootstrapDelta <- function(regressionFormula,
                            PiMethod = binomial(link = logit),
                            nBoots = 1000,
                            quantiles = c(0.05, 0.95),
-                           effectType = 'Population',
+                           prop = 'All',
                            nCores = 1
 ) {
   
@@ -92,7 +92,7 @@ bootstrapDelta <- function(regressionFormula,
                                 'PiMethod',
                                 'nBoots',
                                 'quantiles',
-                                'effectType',
+                                'prop',
                                 'estimateDelta',
                                 'calculateWeights',
                                 'probabilityFits',
@@ -114,28 +114,83 @@ bootstrapDelta <- function(regressionFormula,
   SD = list()
   Quants = list()
   Matrix = list()
+  MinWeights = list()
+  MaxWeights = list()
   
-  if(effectType == 'Respondent' | effectType == 'Both'){
+  if(prop == '1' | prop == 'All'){
     # Extract coefs for respondent estimates
-    Matrix$Resp <- sapply(Estimates, 
-                             FUN = function(x) x$RespondentDelta$coefficients
+    Matrix$Prop1 <- sapply(Estimates, 
+                             FUN = function(x) x$Prop1$coefficients
                              )
     # Calculate relevant statistics
-    Means$Resp <- rowMeans(Matrix$Resp)
-    Medians$Resp <- apply(Matrix$Resp, 1, median)
-    SD$Resp <- apply(Matrix$Resp, 1, sd)
-    Quants$Resp <- apply(Matrix$Resp, 1, function(x) quantile(x, quantiles, na.rm = T))
+    Means$Prop1 <- rowMeans(Matrix$Prop1)
+    Medians$Prop1 <- apply(Matrix$Prop1, 1, median)
+    SD$Prop1 <- apply(Matrix$Prop1, 1, sd)
+    Quants$Prop1 <- apply(Matrix$Prop1, 1, function(x) quantile(x, quantiles, na.rm = T))
+    # Extract average minimum weight across all replications
+    MinWeights$Prop1 <- mean(sapply(Estimates, FUN = function(x) min(x$pW_Obs_T)))
+    # Extract average maximum weight across all replications
+    MaxWeights$Prop1 <- mean(sapply(Estimates, FUN = function(x) max(x$pW_Obs_T)))
   } 
-  if(effectType == 'Population' | effectType == 'Both'){
-    # Extract coefs for population estimates
-    Matrix$Pop <- sapply(Estimates, 
-                                   FUN = function(x) x$PopulationDelta$coefficients
-                            )
+  if(prop == '2' | prop == 'All'){
+    # Extract coefs for respondent estimates
+    Matrix$Prop2 <- sapply(Estimates, 
+                           FUN = function(x) x$Prop2$coefficients
+    )
     # Calculate relevant statistics
-    Means$Pop <- rowMeans(Matrix$Pop)
-    Medians$Pop <- apply(Matrix$Pop, 1, median)
-    SD$Pop <- apply(Matrix$Pop, 1, sd)
-    Quants$Pop <- apply(Matrix$Pop, 1, function(x) quantile(x, quantiles, na.rm = T))
+    Means$Prop2 <- rowMeans(Matrix$Prop2)
+    Medians$Prop2 <- apply(Matrix$Prop2, 1, median)
+    SD$Prop2 <- apply(Matrix$Prop2, 1, sd)
+    Quants$Prop2 <- apply(Matrix$Prop2, 1, function(x) quantile(x, quantiles, na.rm = T))
+    # Extract average minimum weight across all replications
+    MinWeights$Prop2 <- mean(sapply(Estimates, FUN = function(x) min(x$Pi_Obs_Resp)))
+    # Extract average maximum weight across all replications
+    MaxWeights$Prop2 <- mean(sapply(Estimates, FUN = function(x) max(x$Pi_Obs_Resp)))
+  } 
+  if(prop == '3' | prop == 'All'){
+    # Extract coefs for respondent estimates
+    Matrix$Prop3 <- sapply(Estimates, 
+                           FUN = function(x) x$Prop3$coefficients
+    )
+    # Calculate relevant statistics
+    Means$Prop3 <- rowMeans(Matrix$Prop3)
+    Medians$Prop3 <- apply(Matrix$Prop3, 1, median)
+    SD$Prop3 <- apply(Matrix$Prop3, 1, sd)
+    Quants$Prop3 <- apply(Matrix$Prop3, 1, function(x) quantile(x, quantiles, na.rm = T))
+    # Extract average minimum weight across all replications
+    MinWeights$Prop3 <- mean(sapply(Estimates, FUN = function(x) min(x$pWxPi_Obs_T)))
+    # Extract average maximum weight across all replications
+    MaxWeights$Prop3 <- mean(sapply(Estimates, FUN = function(x) max(x$pWxPi_Obs_T)))
+  } 
+  if(prop == '4' | prop == 'All'){
+    # Extract coefs for respondent estimates
+    Matrix$Prop4 <- sapply(Estimates, 
+                           FUN = function(x) x$Prop4$coefficients
+    )
+    # Calculate relevant statistics
+    Means$Prop4 <- rowMeans(Matrix$Prop4)
+    Medians$Prop4 <- apply(Matrix$Prop4, 1, median)
+    SD$Prop4 <- apply(Matrix$Prop4, 1, sd)
+    Quants$Prop4 <- apply(Matrix$Prop4, 1, function(x) quantile(x, quantiles, na.rm = T))
+    # Extract average minimum weight across all replications
+    MinWeights$Prop4 <- mean(sapply(Estimates, FUN = function(x) min(x$Pi_Resp)))
+    # Extract average maximum weight across all replications
+    MaxWeights$Prop4 <- mean(sapply(Estimates, FUN = function(x) max(x$Pi_Resp)))
+  } 
+  if(prop == '5' | prop == 'All'){
+    # Extract coefs for respondent estimates
+    Matrix$Prop5 <- sapply(Estimates, 
+                           FUN = function(x) x$Prop5$coefficients
+    )
+    # Calculate relevant statistics
+    Means$Prop5 <- rowMeans(Matrix$Prop5)
+    Medians$Prop5 <- apply(Matrix$Prop5, 1, median)
+    SD$Prop5 <- apply(Matrix$Prop5, 1, sd)
+    Quants$Prop5 <- apply(Matrix$Prop5, 1, function(x) quantile(x, quantiles, na.rm = T))
+    # Extract average minimum weight across all replications
+    MinWeights$Prop5 <- mean(sapply(Estimates, FUN = function(x) min(x$pWxPi_Resp)))
+    # Extract average maximum weight across all replications
+    MaxWeights$Prop5 <- mean(sapply(Estimates, FUN = function(x) max(x$pWxPi_Resp)))
   } 
   
   # Stopping the cluster
@@ -145,6 +200,8 @@ bootstrapDelta <- function(regressionFormula,
               Medians = Medians, 
               SD = SD,
               Quants = Quants,
+              MinWeights = MinWeights,
+              MaxWeights = MaxWeights,
               Matrix = Matrix,
               Data = BootsList
   )
