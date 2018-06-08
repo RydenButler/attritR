@@ -56,14 +56,16 @@ document(Current)
 data("SimulatedAttrition")
 
 # This will tak a moment ...
-demo(plotAttrition)
-demo(plotInteraction)
+#demo(plotAttrition)
+#demo(plotInteraction)
 
 ### Check Propositions 4 and 5:
 
 # weights
 Weights <- calculateWeights(modelData = SimulatedAttrition[,1:3], 
                              instrumentData = SimulatedAttrition[ , 4])
+
+#############################################################################################
 
 # delta
 Delta <- estimateDelta(Y ~ D + X, 
@@ -74,14 +76,14 @@ Delta <- estimateDelta(Y ~ D + X,
 Boot <- bootstrapDelta(Y ~ D + X, 
                         instrumentFormula = ~ Z, 
                         data = SimulatedAttrition,
-                        effectType = 'Both',
+                        prop = "All",
                         nCores = 4)
 Boot$Means
 
 ATE(Y ~ D + X, 
     instrumentFormula = ~ Z, 
     data = SimulatedAttrition,
-    effectType = 'Both',
+    prop = "All",
     nCores = 4)
 
 ### Check Proposition 6:
@@ -120,4 +122,7 @@ test <- lineprof(bootstrapDelta(Y ~ Treatment + Covariate,
                                 effectType = 'Both',
                                 nCores = 4))
 shine(test)
+
+
+
 
