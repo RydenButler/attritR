@@ -49,7 +49,7 @@ of bootstrap replications is 1,000.}
 \item{quantiles}{A vector of percentiles for which the bootstrapped quantiles will be returned.
 By default the function returns the quantiles corresponding to the 5th and 95th percentiles.}
 
-\item{prop}{A string of either 'Population', 'Respondent', or 'Both', corresponding
+\item{prop}{A string of either 'Population', 'Respondent', or 'All', corresponding
 to the desired ATE calculation. By default, the function calculates the ATE on the population.}
 
 \item{nCores}{}

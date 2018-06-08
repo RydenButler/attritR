@@ -33,7 +33,7 @@
 #' of bootstrap replications is 1,000.
 #' @param quantiles A vector of percentiles for which the bootstrapped quantiles will be returned.
 #' By default the function returns the quantiles corresponding to the 5th and 95th percentiles.
-#' @param prop A string of either 'Population', 'Respondent', or 'Both', corresponding
+#' @param prop A string of either 'Population', 'Respondent', or 'All', corresponding
 #' to the desired ATE calculation. By default, the function calculates the ATE on the population.
 #' @param nCores
 #' 
@@ -107,12 +107,20 @@ bootstrapDelta <- function(regressionFormula,
   
   Point_Estimates <- estimateDelta(regressionFormula = regressionFormula,
                                    instrumentFormula = instrumentFormula,
-                                   data = data)
+                                   data = data,
+                                   p_W_Formula = p_W_Formula,
+                                   p_W_Method = p_W_Method,
+                                   PiFormula = PiFormula,
+                                   PiMethod = PiMethod)
   
   Uncertainty_Estimates <- parLapply(BootsCluster, BootsList, 
                          fun = function(x) estimateDelta(regressionFormula = regressionFormula,
-                                                           instrumentFormula = instrumentFormula,
-                                                           data = x))
+                                                         instrumentFormula = instrumentFormula,
+                                                         data = x,
+                                                         p_W_Formula = p_W_Formula,
+                                                         p_W_Method = p_W_Method,
+                                                         PiFormula = PiFormula,
+                                                         PiMethod = PiMethod))
   ATE = list()
   #Medians = list()
   SD = list()
@@ -133,9 +141,9 @@ bootstrapDelta <- function(regressionFormula,
     SD$Prop1 <- apply(Matrix$Prop1, 1, sd)
     Quants$Prop1 <- apply(Matrix$Prop1, 1, function(x) quantile(x, quantiles, na.rm = T))
     # Extract average minimum weight across all replications
-    MinWeights$Prop1 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) min(x$pW_Obs_T)))
+    MinWeights$Prop1 <- min(Point_Estimates$pW_Obs_T)
     # Extract average maximum weight across all replications
-    MaxWeights$Prop1 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) max(x$pW_Obs_T)))
+    MaxWeights$Prop1 <- max(Point_Estimates$pW_Obs_T)
   } 
   if(prop == '2' | prop == 'All'){
     # Extract coefs for respondent estimates
@@ -149,9 +157,9 @@ bootstrapDelta <- function(regressionFormula,
     SD$Prop2 <- apply(Matrix$Prop2, 1, sd)
     Quants$Prop2 <- apply(Matrix$Prop2, 1, function(x) quantile(x, quantiles, na.rm = T))
     # Extract average minimum weight across all replications
-    MinWeights$Prop2 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) min(x$Pi_Obs_Resp)))
+    MinWeights$Prop2 <- min(Point_Estimates$Pi_Obs_Resp)
     # Extract average maximum weight across all replications
-    MaxWeights$Prop2 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) max(x$Pi_Obs_Resp)))
+    MaxWeights$Prop2 <- max(Point_Estimates$Pi_Obs_Resp)
   } 
   if(prop == '3' | prop == 'All'){
     # Extract coefs for respondent estimates
@@ -165,9 +173,9 @@ bootstrapDelta <- function(regressionFormula,
     SD$Prop3 <- apply(Matrix$Prop3, 1, sd)
     Quants$Prop3 <- apply(Matrix$Prop3, 1, function(x) quantile(x, quantiles, na.rm = T))
     # Extract average minimum weight across all replications
-    MinWeights$Prop3 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) min(x$pWxPi_Obs_T)))
+    MinWeights$Prop3 <- min(Point_Estimates$pWxPi_Obs_T)
     # Extract average maximum weight across all replications
-    MaxWeights$Prop3 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) max(x$pWxPi_Obs_T)))
+    MaxWeights$Prop3 <- max(Point_Estimates$pWxPi_Obs_T)
   } 
   if(prop == '4' | prop == 'All'){
     # Extract coefs for respondent estimates
@@ -181,9 +189,9 @@ bootstrapDelta <- function(regressionFormula,
     SD$Prop4 <- apply(Matrix$Prop4, 1, sd)
     Quants$Prop4 <- apply(Matrix$Prop4, 1, function(x) quantile(x, quantiles, na.rm = T))
     # Extract average minimum weight across all replications
-    MinWeights$Prop4 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) min(x$Pi_Resp)))
+    MinWeights$Prop4 <- min(Point_Estimates$Pi_Resp)
     # Extract average maximum weight across all replications
-    MaxWeights$Prop4 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) max(x$Pi_Resp)))
+    MaxWeights$Prop4 <- max(Point_Estimates$Pi_Resp)
   } 
   if(prop == '5' | prop == 'All'){
     # Extract coefs for respondent estimates
@@ -197,9 +205,9 @@ bootstrapDelta <- function(regressionFormula,
     SD$Prop5 <- apply(Matrix$Prop5, 1, sd)
     Quants$Prop5 <- apply(Matrix$Prop5, 1, function(x) quantile(x, quantiles, na.rm = T))
     # Extract average minimum weight across all replications
-    MinWeights$Prop5 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) min(x$pWxPi_Resp)))
+    MinWeights$Prop5 <- min(Point_Estimates$pWxPi_Resp)
     # Extract average maximum weight across all replications
-    MaxWeights$Prop5 <- mean(sapply(Uncertainty_Estimates, FUN = function(x) max(x$pWxPi_Resp)))
+    MaxWeights$Prop5 <- max(Point_Estimates$pWxPi_Resp)
   } 
   
   # Stopping the cluster
