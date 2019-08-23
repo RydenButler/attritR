@@ -73,11 +73,15 @@ Delta <- estimateDelta(Y ~ D + X,
                         data = SimulatedAttrition)
 
 # bootstrap
+start <- Sys.time()
 Boot <- bootstrapDelta(Y ~ D + X, 
                         instrumentFormula = ~ Z, 
                         data = SimulatedAttrition,
                         prop = "All",
                         nCores = 4)
+stop <- Sys.time()
+stop-start
+
 Boot$Means
 
 ATE(Y ~ D + X, 
