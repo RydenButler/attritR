@@ -4,8 +4,8 @@
 \alias{estimateDelta}
 \title{Estimating the ATE given non-random attrition}
 \usage{
-estimateDelta(regressionFormula, instrumentFormula, data, p_W_Formula = R ~ .,
-  p_W_Method = binomial(link = logit), PiFormula = D ~ .,
+estimateDelta(regressionFormula, instrumentFormula, data, p_W_Formula = R
+  ~ ., p_W_Method = binomial(link = logit), PiFormula = D ~ .,
   PiMethod = binomial(link = logit))
 }
 \arguments{

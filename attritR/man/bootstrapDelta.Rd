@@ -4,10 +4,11 @@
 \alias{bootstrapDelta}
 \title{Estimating standard errors for ATEs given non-random attrition}
 \usage{
-bootstrapDelta(regressionFormula, instrumentFormula, data, p_W_Formula = R ~
-  ., p_W_Method = binomial(link = logit), PiFormula = D ~ .,
-  PiMethod = binomial(link = logit), nBoots = 1000, quantiles = c(0.05,
-  0.95), prop = "All", nCores = detectCores() - 1)
+bootstrapDelta(regressionFormula, instrumentFormula, data,
+  p_W_Formula = R ~ ., p_W_Method = binomial(link = logit),
+  PiFormula = D ~ ., PiMethod = binomial(link = logit),
+  nBoots = 1000, quantiles = c(0.05, 0.95), prop = "All",
+  nCores = detectCores() - 1)
 }
 \arguments{
 \item{regressionFormula}{An object of class \code{formula} (or one that can be coerced to

@@ -11,7 +11,7 @@ Depends:
     R (>= 3.0.0),
     methods 
 License: GPL (>= 2)
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 Imports:
   stats,
   gam,
@@ -22,4 +22,3 @@ Collate:
   'bootstrapDelta.R'
   'ATE.R'
   'data.R'
-
