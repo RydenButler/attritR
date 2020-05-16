@@ -83,213 +83,202 @@
 #' @import 'parallel'
 #' @export
 #' 
+#' 
 
-################################################################################
-### Conditional Statements Determining Which Weights & Proposition are Computed
-################################################################################
-if(prop == '1' | prop == 'All'){
-  # Calculate relevant statistics
-  ATE$Prop1 <- PointEstimates$Prop1$coefficients[2]
-  SD$Prop1 <- apply(UncertaintyEstimates[1:3, ], 1, sd)
-  # Extract average minimum weight across all replications
-  MinWeights$Prop1 <- min(PointEstimates$pW_Obs_T)
-  # Extract average maximum weight across all replications
-  MaxWeights$Prop1 <- max(PointEstimates$pW_Obs_T)
-} 
-if(prop == '2' | prop == 'All'){
-  # Calculate relevant statistics
-  ATE$Prop2 <- PointEstimates$Prop2$coefficients[2]
-  SD$Prop2 <- apply(UncertaintyEstimates[4:6, ], 1, sd)
-  # Extract average minimum weight across all replications
-  MinWeights$Prop2 <- min(PointEstimates$Pi_Obs_Resp)
-  # Extract average maximum weight across all replications
-  MaxWeights$Prop2 <- max(PointEstimates$Pi_Obs_Resp)
-} 
-if(prop == '3' | prop == 'All'){
-  # Calculate relevant statistics
-  ATE$Prop3 <- PointEstimates$Prop3$coefficients[2]
-  SD$Prop3 <- apply(UncertaintyEstimates[7:9, ], 1, sd)
-  # Extract average minimum weight across all replications
-  MinWeights$Prop3 <- min(PointEstimates$pWxPi_Obs_T)
-  # Extract average maximum weight across all replications
-  MaxWeights$Prop3 <- max(PointEstimates$pWxPi_Obs_T)
-} 
-if(prop == '4' | prop == 'All'){
-  # Calculate relevant statistics
-  ATE$Prop4 <- PointEstimates$Prop4$coefficients[2]
-  SD$Prop4 <- apply(UncertaintyEstimates[10:12, ], 1, sd)
-  # Extract average minimum weight across all replications
-  MinWeights$Prop4 <- min(PointEstimates$Pi_Resp)
-  # Extract average maximum weight across all replications
-  MaxWeights$Prop4 <- max(PointEstimates$Pi_Resp)
-} 
-if(prop == '5' | prop == 'All'){
-  # Calculate relevant statistics
-  ATE$Prop5 <- PointEstimates$Prop5$coefficients[2]
-  SD$Prop5 <- apply(UncertaintyEstimates[13:15, ], 1, sd)
-  # Extract average minimum weight across all replications
-  MinWeights$Prop5 <- min(PointEstimates$pWxPi_Resp)
-  # Extract average maximum weight across all replications
-  MaxWeights$Prop5 <- max(PointEstimates$pWxPi_Resp)
-} 
-
-################################################################################
-###                       Calculate Weights
-################################################################################
-
-probabilityFits <- function(formula,
-                            modelData,
-                            method = binomial(link = logit)
+ATE <- function(outcomeFormula, 
+                treatment,
+                instrument,
+                data,
+                rpwFormula = R ~ .,
+                rpwMethod = binomial(link = logit),
+                tpwFormula = D ~ .,
+                tpwMethod = binomial(link = logit),
+                nBoots = 1000,
+                quantiles = c(0.05, 0.95),
+                effectType, # "respondent" or "population"
+                attritionType, # "Treat" "Obs" or "Unobs"
+                nCores = 1
 ) {
-  # Predict probabilities for fitted model
-  Fits <- predict(object = gam(formula = formula, 
-                               family = method,
-                               data = modelData,
-                               maxit = 1000),
-                  type = 'response')
-  return(Fits)
-}
-
-modelData[ , 1] <- as.numeric(!is.na(.subset2(modelData, 1)))
-# Rename to R and D for access below
-names(modelData)[1:2] <- c('R', 'D')
-
-# IMPORTANT NOTE:
-### This modelData must be structured as columns of Y, D, X
-### Otherwise the following calculations are incorrect
-
-# Note: the p(W) and pi weights are calculated differently for each of the five 
-# propositions, so we need to calculate each type of weight
-
-# calculating response propensity on treatment and observables (Props 1 and 3)
-# Regress R on D + X; calculate fitted values
-p_W_Fits_NoInst <- probabilityFits(formula = p_W_Formula,
-                                   # Since default formula is R ~ .
-                                   modelData = modelData,
-                                   method = p_W_Method
-)
-
-# calculating treatment propensity given observables for respondents only (Prop 2)
-# Regress D on X; calculate fitted values
-Pi_Fits_Obs_Resp <- probabilityFits(formula = PiFormula,
-                                    # Since default formula is D ~ ., we remove R, while conditioning on R = 1
-                                    modelData = modelData[modelData$R==1 , -1],
-                                    method = PiMethod
-)
-
-# Treatment propensity scores
-Pi_Fits_Obs_Resp[modelData[modelData$R==1, ]$D!=1] <-  (1 - Pi_Fits_Obs_Resp[modelData[modelData$R==1, ]$D!=1])
-
-# Product of response propensity and treatment propensity given observables (Prop 3)
-
-AllWeights_Obs <- p_W_Fits_NoInst[modelData$R==1]*Pi_Fits_Obs_Resp
-
-# calculations of treatment and response propensity when incorporating the instrument
-# (Props 4 and 5)
-
-# Regress R on D + X + Z; calculate fitted values
-modelData$p_W_Fits_Inst <- probabilityFits(formula = p_W_Formula,
-                                           # Since default formula is R ~ .
-                                           modelData = data.frame(modelData, instrumentData),
-                                           method = p_W_Method
-)
-
-# pi (treatment propensity scores) estimated for respondents only
-# (Prop 4)
-# Regress D on X + p(W)
-Pi_Fits_Resp <- probabilityFits(formula = PiFormula,
-                                # Since default formula is D ~ ., we remove R while conditioning on R = 1
-                                modelData = modelData[modelData$R==1 , -1],
-                                method = PiMethod
-)
-
-# Treatment propensity scores
-Pi_Fits_Resp[modelData[modelData$R==1, ]$D!=1] <-  (1 - Pi_Fits_Resp[modelData[modelData$R==1, ]$D!=1])
-
-# Product of response propensity scores and treatment propensity scores when using
-# treatment propensity score for respondents only
-AllWeights_Resp <- modelData[modelData$R==1, ]$p_W_Fits_Inst * Pi_Fits_Resp
-
-
-################################################################################
-###                  Estimate n Bootstraps of Desired Estimator
-################################################################################
-
-# Make cluster
-BootsCluster <- makeCluster(nCores)
-clusterExport(BootsCluster, c('regressionFormula', 
-                              'instrumentFormula', 
-                              'data',
-                              'p_W_Formula',
-                              'p_W_Method',
-                              'PiFormula',
-                              'PiMethod',
-                              'nBoots',
-                              'quantiles',
-                              'prop',
-                              'estimateDelta',
-                              'calculateWeights',
-                              'probabilityFits',
-                              'gam'), 
-              envir = environment())
-# Bootstrap data: random sampling of dataset with replacement
-UncertaintyEstimates <- parSapply(BootsCluster, 1:nBoots, 
-                                  FUN = function(n) {bootstrap <- lm(formula = regressionFormula,
-                                                                     weights = 1/AppropriateWeight,
-                                                                     data = ModelData[!is.na(ModelData$Y),]
-                                  )
-                                  return(coef(bootstrap))})
-stopCluster(cl = BootsCluster)
-
-
-################################################################################
-###                     Print Model Summary & Return Results
-################################################################################
-
-# Printing summary result tables
-
-if(effectType == "Population"){
-  ResultsPrint <- data.frame('Mean'=c(format(round(Results$Means$Pop[2], digit=3), nsmall=3)),
-                             'Median'=c(format(round(Results$Medians$Pop[2], digit=3), nsmall=3)),
-                             'SD'=c(format(round(Results$SD$Pop[2], digit=3), nsmall=3)),
-                             'Lower 5%'=c(format(round(Results$Quants$Pop[1,2], digit=3), nsmall=3)),
-                             'Upper 95%'=c(format(round(Results$Quants$Pop[2,2], digit=3), nsmall=3)),
-                             row.names = c("Population"),
-                             check.names = FALSE)
-  cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
+  
+  ################################################################################
+  ### Conditional Statements Determining Which Weights & Proposition are Computed
+  ################################################################################
+  
+  # which proposition you are using depends on the inputs to effectType and attritionType
+  
+  # prop 0: attrition caused by treatment, ATE|R=1--effectType="respondent" attritionType="Treat" (we probably don't even want to try to incorporate functionality for this, since there is no weighting involved)
+  # prop 1: attrition caused by treatment, ATE--effectType="population" attritionType="Treat"
+  # prop 2: attrition caused by treatment and observables, ATE|R=1--effectType="respondent" attritionType="Obs"
+  # prop 3: attrition caused by treatment and observables, ATE--effectType="population" attritionType="Obs"
+  # prop 4: attrition caused by treatment, observables, and unobservables ATE|R=1--effectType="respondent" attritionType="Unobs"
+  # prop 5: attrition caused by treatment, observables, and unobservables ATE--effectType="population" attritionType="Unobs"
+  
+  # this creates a new variable to indicate which observations are respondents/attritters
+  
+  data$R <- ifelse(!is.na(data[,as.character(outcomeFormula[2])]), 1 , 0)
+  
+  ################################################################################
+  ###                       Calculate Weights
+  ################################################################################
+  
+  probabilityFits <- function(formula,
+                              data,
+                              method = binomial(link = logit)
+  ) {
+    # Predict probabilities for fitted model
+    Fits <- predict(object = gam(formula = formula, 
+                                 family = method,
+                                 data = data,
+                                 maxit = 1000),
+                    type = 'response')
+    return(Fits)
+  }
+  
+  if(effectType == "population"){
+    
+    data$rpw <- probabilityFits(formula = rpwFormula,
+                                data = data,
+                                method = rpwMethod
+    )
+    
+    if(attritionType == "Treat" | attritionType == "Obs"){
+      
+      data$tpw <- probabilityFits(formula = tpwFormula,
+                                  data = data,
+                                  method = tpwMethod
+      )
+      
+    }
+    
+    if(attritionType == "Unobs"){
+      
+      data$tpw <- probabilityFits(formula = update(tpwFormula, ~ . + rpw),
+                                  data = data,
+                                  method = tpwMethod
+      )
+      
+    }
+    
+  }
+  
+  if(effectType=="respondent"){
+    
+    if(attritionType == "Treat" | attritionType == "Obs"){
+      
+      data$tpw <- probabilityFits(formula = tpwFormula,
+                                  modelData = data,
+                                  method = tpwMethod
+      )
+      
+    }
+    
+    if(attritionType == "Unobs"){
+      
+      data$rpw <- probabilityFits(formula = rpwFormula,
+                                  data = data,
+                                  method = rpwMethod
+      )
+      
+      data$tpw <- probabilityFits(formula = update(tpwFormula, ~ . + rpw),
+                                  modelData = data,
+                                  method = tpwMethod
+      )
+      
+      # this is for proposition 4; the rpw is only used to calculate the tpw, so just get rid of it
+      # after using it
+      
+      data$rpw <- NULL
+      
+    }
+    
+  }
+  
+  # need to reorient the tpw for units in control
+  
+  data$tpw[data[,treatment]!=1] <-  (1 - data$tpw[data[,treatment]!=1])
+  
+  ################################################################################
+  ###                  Estimate Treatment Effect for Desired Estimator
+  ################################################################################
+  
+  # if the effectType="population" there will be rpw in the data
+  
+  if("rpw" %in% colnames(data)){
+    
+    treatEff <- coef(lm(formula = outcomeFormula,
+                        weights = 1/(rpw*tpw),
+                        data = data
+    ))[treatment]
+    
+  } else {
+    
+    treatEff <- coef(lm(formula = outcomeFormula,
+                        weights = 1/tpw,
+                        data = data
+    ))[treatment]
+    
+  }
+  
+  
+  ################################################################################
+  ###                  Estimate n Bootstraps of Desired Estimator
+  ################################################################################
+  
+  # Make cluster
+  BootsCluster <- makeCluster(nCores)
+  # Bootstrap data: random sampling of dataset with replacement
+  clusterExport(BootsCluster, c('outcomeFormula',
+                                'data',
+                                'nBoots',
+                                'treatment'),
+                envir = environment())
+  
+  # in the bootstrapping, do we want bootstrapped data sets of the size equal to the number of respondents,
+  # or of the full sample?  the former is implemented
+  
+  if("rpw" %in% colnames(data)){
+    
+    UncertaintyEstimates <- parSapply(BootsCluster, 1:nBoots,
+                                      FUN = function(n) {bootstrap <- lm(formula = outcomeFormula,
+                                                                         weights = 1/(rpw*tpw),
+                                                                         data = data[sample(x = nrow(data[which(data$R==1),]),
+                                                                                            size = nrow(data[which(data$R==1),]),
+                                                                                            replace = T), ]
+                                      )
+                                      return(coef(bootstrap)[treatment])})
+  } else {
+    
+    UncertaintyEstimates <- parSapply(BootsCluster, 1:nBoots,
+                                      FUN = function(n) {bootstrap <- lm(formula = outcomeFormula,
+                                                                         weights = 1/tpw,
+                                                                         data = data[sample(x = nrow(data[which(data$R==1),]),
+                                                                                            size = nrow(data[which(data$R==1),]),
+                                                                                            replace = T), ]
+                                      )
+                                      return(coef(bootstrap)[treatment])})
+    
+  }
+  
+  stopCluster(cl = BootsCluster)
+  
+  
+  ################################################################################
+  ###                     Print Model Summary & Return Results
+  ################################################################################
+  
+  # Printing summary result tables
+  
+  ResultsPrint <- data.frame('Estimate' = treatEff,
+                             'SD' = sd(UncertaintyEstimates),
+                             'CI Lower' = quantile(UncertaintyEstimates,probs=quantiles[1]),
+                             'CI Upper' = quantile(UncertaintyEstimates,probs=quantiles[2]),
+                             row.names = c("Treatment Effect"))
+  cat('--- Treatment Effect Estimate from', nBoots, 'Bootstraps ---\n',
       'Summary:\n')
   print(ResultsPrint)
-  invisible(Results)
-} 
-if(effectType == "Respondent"){
-  ResultsPrint <- data.frame('Mean'=c(format(round(Results$Means$Resp[2], digit=3), nsmall=3)),
-                             'Median'=c(format(round(Results$Medians$Resp[2], digit=3), nsmall=3)),
-                             'SE'=c(format(round(Results$SD$Resp[2], digit=3), nsmall=3)),
-                             'Lower 5%'=c(format(round(Results$Quants$Resp[1,2], digit=3), nsmall=3)),
-                             'Upper 95%'=c(format(round(Results$Quants$Resp[2,2], digit=3), nsmall=3)),
-                             row.names = c("Respondent"),
-                             check.names = FALSE)
-  cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
-      'Summary:\n')
-  print(ResultsPrint)
-  invisible(Results)
-}
-if(effectType == "Both"){  ## to do: aligning columns consistently
-  ResultsPrint <- data.frame('Mean'=c(format(round(Results$Means$Resp[2], digit=3), nsmall=3),
-                                      format(round(Results$Means$Pop[2], digit=3), nsmall=3)),
-                             'Median'=c(format(round(Results$Medians$Resp[2], digit=3), nsmall=3),
-                                        format(round(Results$Medians$Pop[2], digit=3), nsmall=3)),
-                             'SE'=c(format(round(Results$SD$Resp[2], digit=3), nsmall=3),
-                                    format(round(Results$SD$Pop[2], digit=3), nsmall=3)),
-                             'Lower 5%'=c(format(round(Results$Quants$Resp[1,2], digit=3), nsmall=3),
-                                          format(round(Results$Quants$Pop[1,2], digit=3), nsmall=3)),
-                             'Upper 95%'=c(format(round(Results$Quants$Resp[2,2], digit=3), nsmall=3),
-                                           format(round(Results$Quants$Pop[2,2], digit=3), nsmall=3)),
-                             row.names = c("Respondent","Population"),
-                             check.names = FALSE)
-  cat('--- ATE Results from', nBoots, 'Bootstraps ---\n',
-      'Summary:\n')
-  print(ResultsPrint)
-  invisible(Results)
-}
+  # what we might want to add to the printed summary: number of observations, number attritted,
+  # effectType, attritionType
+  invisible()
+  # what we might want in the outputted object: treatment effect, bootstrapped SE, bootstrapped CI,
+  # uncertainty estimates, rpw/tpw (where applicable), effectType, attritionType, formulas
 }
