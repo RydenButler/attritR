@@ -1,6 +1,7 @@
 library(devtools)
 library(roxygen2)
 library(MASS)
+library(causalweight)
 
 # DO NOT RUN THE FOLLOWING LINES
 # This creates a blank package template
@@ -54,55 +55,90 @@ Current <- as.package('attritR')
 load_all(Current)
 document(Current)
 data("SimulatedAttrition")
+# make intentionally irregular variable names
+names(SimulatedAttrition) <- c('trump_words', 'Tment', 'covariate', 'money_inst')
+
+# Prop 3
+out <- ipwlm(regression_formula = trump_words ~ Tment + covariate,
+             treatment = 'Tment',
+             instrument = NULL,
+             data = SimulatedAttrition,
+             effect_type  = 'population', # "respondent", "population"
+             attrition_type = 'observable', # "treatment", "observable", "unobservable"
+             response_weight_formula = response ~ .,
+             response_weight_method = binomial(link = probit),
+             treatment_weight_formula = treatment ~ .,
+             treatment_weight_method = binomial(link = probit),
+             n_bootstraps = 10,
+             quantiles = c(0.05, 0.95),
+             n_cores = 1)
+
+out2 <- treatweight(y = SimulatedAttrition$trump_words, 
+                    d = SimulatedAttrition$Tment, 
+                    x = SimulatedAttrition$covariate, 
+                    s = as.numeric(!is.na(SimulatedAttrition$trump_words)), 
+                    z = NULL, 
+                    boot = 10, trim = 0.00, selpop = FALSE)
+
+out$coefficients
+out2$effect
+
+# Prop 4
+out <- ipwlm(regression_formula = trump_words ~ Tment + covariate + money_inst,
+    treatment = 'Tment',
+    instrument = 'money_inst',
+    data = SimulatedAttrition,
+    effect_type  = 'respondent', # "respondent", "population"
+    attrition_type = 'unobservable', # "treatment", "observable", "unobservable"
+    response_weight_formula = response ~ .,
+    response_weight_method = binomial(link = probit),
+    treatment_weight_formula = treatment ~ .,
+    treatment_weight_method = binomial(link = probit),
+    n_bootstraps = 10,
+    quantiles = c(0.05, 0.95),
+    n_cores = 1)
+
+out2 <- treatweight(y = SimulatedAttrition$trump_words, 
+            d = SimulatedAttrition$Tment, 
+            x = SimulatedAttrition$covariate, 
+            s = as.numeric(!is.na(SimulatedAttrition$trump_words)), 
+            z = SimulatedAttrition$money_inst, 
+            boot = 10, trim = 0.00, selpop = TRUE)
+
+out$coefficients
+out2$effect
+
+# Prop 5
+out <- ipwlm(regression_formula = trump_words ~ Tment + covariate + money_inst,
+             treatment = 'Tment',
+             instrument = 'money_inst',
+             data = SimulatedAttrition,
+             effect_type  = 'population', # "respondent", "population"
+             attrition_type = 'unobservable', # "treatment", "observable", "unobservable"
+             response_weight_formula = response ~ .,
+             response_weight_method = binomial(link = probit),
+             treatment_weight_formula = treatment ~ .,
+             treatment_weight_method = binomial(link = probit),
+             n_bootstraps = 10,
+             quantiles = c(0.05, 0.95),
+             n_cores = 1)
+
+out2 <- treatweight(y = SimulatedAttrition$trump_words, 
+                    d = SimulatedAttrition$Tment, 
+                    x = SimulatedAttrition$covariate, 
+                    s = as.numeric(!is.na(SimulatedAttrition$trump_words)), 
+                    z = SimulatedAttrition$money_inst, 
+                    boot = 10, trim = 0.00, selpop = FALSE)
+
+out$coefficients
+out2$effect
+
+
+
 
 # This will tak a moment ...
 #demo(plotAttrition)
 #demo(plotInteraction)
-
-### Check Propositions 4 and 5:
-
-# weights
-Weights <- calculateWeights(modelData = SimulatedAttrition[,1:3], 
-                             instrumentData = SimulatedAttrition[ , 4])
-
-#############################################################################################
-
-# delta
-Delta <- estimateDelta(Y ~ D + X, 
-                        instrumentFormula = ~ Z, 
-                        data = SimulatedAttrition)
-
-# bootstrap
-start <- Sys.time()
-Boot <- bootstrapDelta(Y ~ D + X, 
-                        instrumentFormula = ~ Z, 
-                        data = SimulatedAttrition,
-                        prop = "All",
-                        nCores = 4)
-stop <- Sys.time()
-stop-start
-
-Boot$Means
-
-ATE(Y ~ D + X, 
-    instrumentFormula = ~ Z, 
-    data = SimulatedAttrition,
-    prop = "All",
-    nCores = 4)
-
-### Check Proposition 6:
-ATE(Y ~ D,
-    instrumentFormula = ~ Z,
-    data = SimulatedAttrition,
-    effectType = 'Both',
-    nCores = 4)
-
-### Check GAM arguments
-library(gam)
-WeightsGAM <- calculateWeights(modelData = SimulatedAttrition[ , 1:3], 
-                               instrumentData = SimulatedAttrition[ , 4],
-                               p_W_Formula = R ~ D + s(X))
-
 
 ### Efficieny checks ###
 library(microbenchmark)
