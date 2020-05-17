@@ -1,4 +1,5 @@
 library(devtools)
+library(usethis)
 library(roxygen2)
 library(MASS)
 library(causalweight)
@@ -54,6 +55,12 @@ library(causalweight)
 Current <- as.package('attritR')
 load_all(Current)
 document(Current)
+# setwd('~/Dropbox/attritR')
+# use_readme_rmd()
+
+
+
+
 data("SimulatedAttrition")
 # make intentionally irregular variable names
 names(SimulatedAttrition) <- c('trump_words', 'Tment', 'covariate', 'money_inst')
