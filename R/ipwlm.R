@@ -149,6 +149,10 @@ ipwlm <- function(regression_formula,
   if(!(response_weight_method %in% c("logit", "probit", "ridge"))){
     stop('response model method must be one of "logit" or "probit" or "ridge"')
   }
+  # exception handling for treatment method type
+  if(!(treatment_weight_method %in% c("logit", "probit"))){
+    stop('response model method must be one of "logit" or "probit"')
+  }
   
   # if estimating ATE or conditionining on unobservables, compute meaningful response weight ...
   if(effect_type == "population" | attrition_type == "unobservable"){

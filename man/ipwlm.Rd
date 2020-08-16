@@ -70,12 +70,11 @@ includes only the confounder covariates included on the right-hand side of
 response propensity weights are also included on the right-hand side of the 
 formula.}
 
-\item{treatment_weight_method}{A character string specifying the error 
-distribution and link function to be used in the generalized additive model 
+\item{treatment_weight_method}{A character string specifying the model 
 which estimates subjects' response propensity. By default, 
-\code{response_weight_method} is set to \code{binomial(link = logit)}, which 
-fits a logistic regression model. Any family function that \code{gam} accepts 
-can be specified here.}
+\code{treatment_weight_method} is set to \code{'logit'}, which 
+fits a binomial logistic regression model. Other valid inputs include 
+\code{'probit'}, which fits a binomial probit regression.}
 
 \item{n_bootstraps}{Numeric value defining the number of non-parametric 
 bootstrap samples to be computed. The default number of bootstrap 
