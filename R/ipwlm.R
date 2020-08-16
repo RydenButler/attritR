@@ -55,12 +55,11 @@
 #' \code{regression_formula}. When accounting for attrition on unobservables,
 #' response propensity weights are also included on the right-hand side of the 
 #' formula.
-#' @param treatment_weight_method A character string specifying the error 
-#' distribution and link function to be used in the generalized additive model 
+#' @param treatment_weight_method A character string specifying the model 
 #' which estimates subjects' response propensity. By default, 
-#' \code{response_weight_method} is set to \code{binomial(link = logit)}, which 
-#' fits a logistic regression model. Any family function that \code{gam} accepts 
-#' can be specified here.
+#' \code{treatment_weight_method} is set to \code{'logit'}, which 
+#' fits a binomial logistic regression model. Other valid inputs include 
+#' \code{'probit'}, which fits a binomial probit regression. 
 #' @param n_bootstraps Numeric value defining the number of non-parametric 
 #' bootstrap samples to be computed. The default number of bootstrap 
 #' replications is 1000.
@@ -161,7 +160,7 @@ ipwlm <- function(regression_formula,
       response_weights <- predict(object = response_propensity, type = "response")
     }
     if(response_weight_method == "ridge"){
-      # automatically select lambda-minimizing model
+      # automatically select lambda-optimized model
       response_propensity <- cv.glmnet(y = internal_data$response,
                                        x =  data.matrix(model.frame(response_weight_formula, 
                                                                     internal_data[ , !(names(internal_data) == 'outcome')], 
@@ -185,7 +184,7 @@ ipwlm <- function(regression_formula,
   }
   # treatment weights for props 2-5; formula determined by attrition_type
   treatment_propensity <- gam(formula = treatment_weight_formula,
-                              family = treatment_weight_method,
+                              family = binomial(link = treatment_weight_method),
                               data = internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))],
                               maxit = 1000)
   treatment_weights <- predict(object = treatment_propensity, type = "response")
