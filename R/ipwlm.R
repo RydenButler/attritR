@@ -40,12 +40,12 @@
 #' respondents' response propensity, which is used in weighting treatment effect
 #' estimates that account for non-random attrition. By default, the formula 
 #' includes all covariates on the right-hand side of \code{regression_formula}.
-#' @param response_weight_method A character string specifying the error 
-#' distribution and link function to be used in the generalized additive model 
+#' @param response_weight_method A character string specifying the model 
 #' which estimates subjects' response propensity. By default, 
-#' \code{response_weight_method} is set to \code{binomial(link = logit)}, which 
-#' fits a logistic regression model. Any family function that \code{gam} accepts 
-#' can be specified here.
+#' \code{response_weight_method} is set to \code{'logit'}, which 
+#' fits a binomial logistic regression model. Other valid inputs include 
+#' \code{'probit'}, which fits a binomial probit regression, and \code{'ridge'},
+#' which fits a binomial logistic ridge regression. 
 #' @param treatment_weight_formula An object of class \code{formula} (or one that 
 #' can be coerced to that class); a symbolic description of the model to be 
 #' fitted. \code{treatment_weight_formula} specifies the model for estimating 
@@ -97,6 +97,7 @@
 #' @rdname ipwlm
 #' @import 'parallel'
 #' @import 'gam'
+#' @import 'glmnet'
 #' @export
 #' 
 #' 
@@ -108,9 +109,9 @@ ipwlm <- function(regression_formula,
                 effect_type,
                 attrition_type, # "treatment", "observable", "unobservable"
                 response_weight_formula = response ~ .,
-                response_weight_method = binomial(link = logit),
+                response_weight_method = 'logit',
                 treatment_weight_formula = data[treatment] ~ .,
-                treatment_weight_method = binomial(link = logit),
+                treatment_weight_method = 'logit',
                 n_bootstraps = 1000,
                 quantiles = c(0.05, 0.95),
                 n_cores = 1) {
@@ -127,32 +128,53 @@ ipwlm <- function(regression_formula,
   # make attrition indicator (non-response = 1; response = 0)
   internal_data$response <- as.numeric(!is.na(internal_data[ , 1]))
   # rename relevant variables
-  names(internal_data)[1] <- 'outcome'
-  names(internal_data)[which(names(internal_data) == treatment)] <- 'treatment'
-  names(internal_data)[which(names(internal_data) == instrument)] <- 'instrument'
+  names(internal_data)[1] <- "outcome"
+  names(internal_data)[which(names(internal_data) == treatment)] <- "treatment"
+  names(internal_data)[which(names(internal_data) == instrument)] <- "instrument"
   
   ### Calculate Weights for Relevant Estimator
   
   # exception handling for effect type inputs
-  if(effect_type != "population" & effect_type != "respondent"){
+  if(!(effect_type %in% c("population", "respondent"))){
     stop('effect_type must be either "population" or "respondent"')
   }
   # exception handling for attrition type inputs
-  if(attrition_type != "treatment" & attrition_type != "observable" & attrition_type != "unobservable"){
+  if(!(attrition_type %in% c("treatment", "observable", "unobservable"))){
     stop('attrition_type must be one of "treatment" or "observable" or "unobservable"')
   }
   # exception handling for unobservable weighting without instrument
   if(attrition_type == "unobservable" & is.null(instrument)){
     stop('weighting for attrition on unobservables requires specification on instrument')
   }
+  # exception handling for response method type
+  if(!(response_weight_method %in% c("logit", "probit", "ridge"))){
+    stop('response model method must be one of "logit" or "probit" or "ridge"')
+  }
   
   # if estimating ATE or conditionining on unobservables, compute meaningful response weight ...
   if(effect_type == "population" | attrition_type == "unobservable"){
-    response_propensity <- gam(formula = response_weight_formula, 
-                               family = response_weight_method,
-                               data = internal_data[ , !(names(internal_data) == 'outcome')],
-                               maxit = 1000)
-    response_weights <- predict(object = response_propensity, type = "response")
+    if(response_weight_method != "ridge"){
+      response_propensity <- gam(formula = response_weight_formula, 
+                                 family = binomial(link = response_weight_method),
+                                 data = internal_data[ , !(names(internal_data) == "outcome")],
+                                 maxit = 1000)
+      response_weights <- predict(object = response_propensity, type = "response")
+    }
+    if(response_weight_method == "ridge"){
+      # automatically select lambda-minimizing model
+      response_propensity <- cv.glmnet(y = internal_data$response,
+                                       x =  data.matrix(model.frame(response_weight_formula, 
+                                                                    internal_data[ , !(names(internal_data) == 'outcome')], 
+                                                                    na.action = NULL)[ , -1]),
+                                    family = "binomial",
+                                    alpha = 0)
+      response_weights <- predict(response_propensity, 
+                                  data.matrix(model.frame(response_weight_formula, 
+                                                          internal_data[ , !(names(internal_data) == 'outcome')], 
+                                                          na.action = NULL)[ , -1]), 
+                                  type = "response")
+      response_propensity <- response_weight_formula
+    }
     response_weights <- response_weights/sum(response_weights)
     # if conditioning treatment propensity on response weights
     if(attrition_type == "unobservable"){
@@ -164,18 +186,18 @@ ipwlm <- function(regression_formula,
   # treatment weights for props 2-5; formula determined by attrition_type
   treatment_propensity <- gam(formula = treatment_weight_formula,
                               family = treatment_weight_method,
-                              data = internal_data[ , !(names(internal_data) %in% c('outcome', 'instrument', 'response'))],
+                              data = internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))],
                               maxit = 1000)
   treatment_weights <- predict(object = treatment_propensity, type = "response")
   # reorient the treatment_weight for units in control
   treatment_weights[internal_data$treatment != 1] <-  (1 - treatment_weights[internal_data$treatment != 1])
   treatment_weights <- treatment_weights/sum(treatment_weights)
   # if estimating ATE|R, multiplying by response weights is trivial
-  if(effect_type == 'respondent'){
+  if(effect_type == "respondent"){
     response_weights <- 1
   }
   # if disregarding treatment propensity
-  if(attrition_type == 'treatment'){
+  if(attrition_type == "treatment"){
     treatment_weights <- 1
   }
   # add inverse probability weights to model data
@@ -191,8 +213,8 @@ ipwlm <- function(regression_formula,
   # Make cluster
   bootstrap_cluster <- makeCluster(n_cores)
   # Bootstrap data: random sampling of dataset with replacement
-  clusterExport(bootstrap_cluster, c('internal_data',
-                                     'n_bootstraps'),
+  clusterExport(bootstrap_cluster, c("internal_data",
+                                     "n_bootstraps"),
                 envir = environment())
   
   # DRM: in the bootstrapping, do we want bootstrapped data sets of the size equal to the number of respondents,
@@ -218,27 +240,24 @@ ipwlm <- function(regression_formula,
   
   # Printing summary result tables
   
-  ResultsPrint <- data.frame('Estimate' = treatment_effect_model$coefficients[[2]],
-                             'SE' = sd(np_bootstrap),
-                             'CI Lower' = confidence_interval[1],
-                             'CI Upper' = confidence_interval[2],
+  ResultsPrint <- data.frame("Estimate" = treatment_effect_model$coefficients[[2]],
+                             "SE" = sd(np_bootstrap),
+                             "CI Lower" = confidence_interval[1],
+                             "CI Upper" = confidence_interval[2],
                              row.names = NULL)
-  cat('--- Treatment Effect with Uncertainty Estimates from', n_bootstraps, 'Non-Parametric Bootstraps ---\n',
-      'Summary:\n')
+  cat("--- Treatment Effect with Uncertainty Estimates from", n_bootstraps, "Non-Parametric Bootstraps ---\n",
+      "Summary:\n")
   print(ResultsPrint)
   # what we might want to add to the printed summary: number of observations, number attritted,
   # effect_type, attrition_type
-  return(list(coefficients = c('treatment' = treatment_effect_model$coefficients[[2]], 
-                               'se' = sd(np_bootstrap), 
-                               'lower_ci' = confidence_interval[1],
-                               'upper_ci' = confidence_interval[2]),
+  return(list(coefficients = c("treatment" = treatment_effect_model$coefficients[[2]], 
+                               "se" = sd(np_bootstrap), 
+                               "lower_ci" = confidence_interval[1],
+                               "upper_ci" = confidence_interval[2]),
               weights = data.frame(Response = response_weights,
                                    Treatment = treatment_weights,
                                    IPW = internal_data$final_weights),
               effect = effect_type,
-              attrition = attrition_type,
-              formulae = list(TreatmentEffect = formula(treatment_effect_model),
-                              ResponsePropensity = if(exists('response_propensity')) formula(response_propensity),
-                              TreatmentPropensity = formula(treatment_propensity))
+              attrition = attrition_type
               ))
 }

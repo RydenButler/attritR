@@ -6,10 +6,10 @@
 \usage{
 ipwlm(regression_formula, treatment, instrument = NULL, data,
   effect_type, attrition_type, response_weight_formula = response ~ .,
-  response_weight_method = binomial(link = logit),
+  response_weight_method = "logit",
   treatment_weight_formula = data[treatment] ~ .,
-  treatment_weight_method = binomial(link = logit),
-  n_bootstraps = 1000, quantiles = c(0.05, 0.95), n_cores = 1)
+  treatment_weight_method = "logit", n_bootstraps = 1000,
+  quantiles = c(0.05, 0.95), n_cores = 1)
 }
 \arguments{
 \item{regression_formula}{An object of class \code{formula} (or one that can 
@@ -53,12 +53,12 @@ respondents' response propensity, which is used in weighting treatment effect
 estimates that account for non-random attrition. By default, the formula 
 includes all covariates on the right-hand side of \code{regression_formula}.}
 
-\item{response_weight_method}{A character string specifying the error 
-distribution and link function to be used in the generalized additive model 
+\item{response_weight_method}{A character string specifying the model 
 which estimates subjects' response propensity. By default, 
-\code{response_weight_method} is set to \code{binomial(link = logit)}, which 
-fits a logistic regression model. Any family function that \code{gam} accepts 
-can be specified here.}
+\code{response_weight_method} is set to \code{'logit'}, which 
+fits a binomial logistic regression model. Other valid inputs include 
+\code{'probit'}, which fits a binomial probit regression, and \code{'ridge'},
+which fits a binomial logistic ridge regression.}
 
 \item{treatment_weight_formula}{An object of class \code{formula} (or one that 
 can be coerced to that class); a symbolic description of the model to be 

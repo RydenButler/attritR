@@ -52,10 +52,11 @@ library(causalweight)
 # save(SimulatedAttrition, file = 'attritR/data/SimulatedAttrition.RData')
 
 # Compile latest package and re-documents
+# setwd('~/Dropbox')
 Current <- as.package('attritR')
 load_all(Current)
 document(Current)
-# setwd('~/Dropbox/attritR')
+
 # use_readme_rmd()
 
 
@@ -65,6 +66,20 @@ data("SimulatedAttrition")
 # make intentionally irregular variable names
 names(SimulatedAttrition) <- c('trump_words', 'Tment', 'covariate', 'money_inst')
 
+regression_formula = trump_words ~ Tment + covariate
+treatment = 'Tment'
+instrument = NULL
+data = SimulatedAttrition
+effect_type  = 'population'
+attrition_type = 'observable'
+response_weight_formula = response ~ .
+response_weight_method = 'ridge'
+treatment_weight_formula = treatment ~ .
+treatment_weight_method = binomial(link = probit)
+n_bootstraps = 10
+quantiles = c(0.05, 0.95)
+n_cores = 1
+
 # Prop 3
 out <- ipwlm(regression_formula = trump_words ~ Tment + covariate,
              treatment = 'Tment',
@@ -73,7 +88,7 @@ out <- ipwlm(regression_formula = trump_words ~ Tment + covariate,
              effect_type  = 'population', # "respondent", "population"
              attrition_type = 'observable', # "treatment", "observable", "unobservable"
              response_weight_formula = response ~ .,
-             response_weight_method = binomial(link = probit),
+             response_weight_method = 'ridge',
              treatment_weight_formula = treatment ~ .,
              treatment_weight_method = binomial(link = probit),
              n_bootstraps = 10,
@@ -98,7 +113,7 @@ out <- ipwlm(regression_formula = trump_words ~ Tment + covariate + money_inst,
     effect_type  = 'respondent', # "respondent", "population"
     attrition_type = 'unobservable', # "treatment", "observable", "unobservable"
     response_weight_formula = response ~ .,
-    response_weight_method = binomial(link = probit),
+    response_weight_method = 'logit',
     treatment_weight_formula = treatment ~ .,
     treatment_weight_method = binomial(link = probit),
     n_bootstraps = 10,
@@ -123,7 +138,7 @@ out <- ipwlm(regression_formula = trump_words ~ Tment + covariate + money_inst,
              effect_type  = 'population', # "respondent", "population"
              attrition_type = 'unobservable', # "treatment", "observable", "unobservable"
              response_weight_formula = response ~ .,
-             response_weight_method = binomial(link = probit),
+             response_weight_method = 'probit',
              treatment_weight_formula = treatment ~ .,
              treatment_weight_method = binomial(link = probit),
              n_bootstraps = 10,
