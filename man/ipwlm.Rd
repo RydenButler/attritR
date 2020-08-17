@@ -74,7 +74,8 @@ formula.}
 which estimates subjects' response propensity. By default, 
 \code{treatment_weight_method} is set to \code{'logit'}, which 
 fits a binomial logistic regression model. Other valid inputs include 
-\code{'probit'}, which fits a binomial probit regression.}
+\code{'probit'}, which fits a binomial probit regression, and \code{'ridge'},
+which fits a binomial logistic ridge regression.}
 
 \item{n_bootstraps}{Numeric value defining the number of non-parametric 
 bootstrap samples to be computed. The default number of bootstrap 

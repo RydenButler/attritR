@@ -75,7 +75,7 @@ attrition_type = 'observable'
 response_weight_formula = response ~ .
 response_weight_method = 'ridge'
 treatment_weight_formula = treatment ~ .
-treatment_weight_method = binomial(link = probit)
+treatment_weight_method = 'ridge'
 n_bootstraps = 10
 quantiles = c(0.05, 0.95)
 n_cores = 1
@@ -90,7 +90,7 @@ out <- ipwlm(regression_formula = trump_words ~ Tment + covariate,
              response_weight_formula = response ~ .,
              response_weight_method = 'ridge',
              treatment_weight_formula = treatment ~ .,
-             treatment_weight_method = binomial(link = probit),
+             treatment_weight_method = 'ridge',
              n_bootstraps = 10,
              quantiles = c(0.05, 0.95),
              n_cores = 1)

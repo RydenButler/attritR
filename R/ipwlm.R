@@ -59,7 +59,8 @@
 #' which estimates subjects' response propensity. By default, 
 #' \code{treatment_weight_method} is set to \code{'logit'}, which 
 #' fits a binomial logistic regression model. Other valid inputs include 
-#' \code{'probit'}, which fits a binomial probit regression. 
+#' \code{'probit'}, which fits a binomial probit regression, and \code{'ridge'},
+#' which fits a binomial logistic ridge regression. 
 #' @param n_bootstraps Numeric value defining the number of non-parametric 
 #' bootstrap samples to be computed. The default number of bootstrap 
 #' replications is 1000.
@@ -150,8 +151,8 @@ ipwlm <- function(regression_formula,
     stop('response model method must be one of "logit" or "probit" or "ridge"')
   }
   # exception handling for treatment method type
-  if(!(treatment_weight_method %in% c("logit", "probit"))){
-    stop('response model method must be one of "logit" or "probit"')
+  if(!(treatment_weight_method %in% c("logit", "probit", "ridge"))){
+    stop('treatment model method must be one of "logit" or "probit" or "ridge"')
   }
   
   # if estimating ATE or conditionining on unobservables, compute meaningful response weight ...
@@ -164,17 +165,18 @@ ipwlm <- function(regression_formula,
       response_weights <- predict(object = response_propensity, type = "response")
     }
     if(response_weight_method == "ridge"){
+      ridge_data_response <- data.matrix(
+        model.frame(
+          response_weight_formula, 
+          internal_data[ , !(names(internal_data) == 'outcome')], 
+          na.action = NULL)[ , -1])
       # automatically select lambda-optimized model
       response_propensity <- cv.glmnet(y = internal_data$response,
-                                       x =  data.matrix(model.frame(response_weight_formula, 
-                                                                    internal_data[ , !(names(internal_data) == 'outcome')], 
-                                                                    na.action = NULL)[ , -1]),
+                                       x =  cbind(1, ridge_data_response),
                                     family = "binomial",
                                     alpha = 0)
       response_weights <- predict(response_propensity, 
-                                  data.matrix(model.frame(response_weight_formula, 
-                                                          internal_data[ , !(names(internal_data) == 'outcome')], 
-                                                          na.action = NULL)[ , -1]), 
+                                  cbind(1, ridge_data_response), 
                                   type = "response")
       response_propensity <- response_weight_formula
     }
@@ -187,11 +189,29 @@ ipwlm <- function(regression_formula,
     }
   }
   # treatment weights for props 2-5; formula determined by attrition_type
-  treatment_propensity <- gam(formula = treatment_weight_formula,
-                              family = binomial(link = treatment_weight_method),
-                              data = internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))],
-                              maxit = 1000)
-  treatment_weights <- predict(object = treatment_propensity, type = "response")
+  if(treatment_weight_method != "ridge"){
+    treatment_propensity <- gam(formula = treatment_weight_formula,
+                                family = binomial(link = treatment_weight_method),
+                                data = internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))],
+                                maxit = 1000)
+    treatment_weights <- predict(object = treatment_propensity, type = "response")
+  }
+  if(treatment_weight_method == "ridge"){
+    ridge_data_treatment <- data.matrix(
+      model.frame(
+        treatment_weight_formula, 
+        internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))], 
+        na.action = NULL)[ , -1])
+    treatment_propensity <- cv.glmnet(y = internal_data$treatment,
+                                      x =  cbind(1, ridge_data_treatment),
+                                      family = "binomial",
+                                      alpha = 0)
+    treatment_weights <- predict(treatment_propensity, 
+                                 cbind(1, ridge_data_treatment),
+                                 type = "response")
+    treatment_propensity <- treatment_weight_formula
+  }
+  
   # reorient the treatment_weight for units in control
   treatment_weights[internal_data$treatment != 1] <-  (1 - treatment_weights[internal_data$treatment != 1])
   treatment_weights <- treatment_weights/sum(treatment_weights)
