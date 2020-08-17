@@ -114,7 +114,8 @@ ipwlm <- function(regression_formula,
                 treatment_weight_method = 'logit',
                 n_bootstraps = 1000,
                 quantiles = c(0.05, 0.95),
-                n_cores = 1) {
+                n_cores = 1,
+                coef_tol = 10^-5) {
   
   # prop 0: attrition caused by treatment (ATE|R = 1): effect_type = "respondent", attrition_type = "treatment"
   # prop 1: attrition caused by treatment (ATE): effect_type = "population", attrition_type = "treatment"
@@ -163,13 +164,14 @@ ipwlm <- function(regression_formula,
                                  data = internal_data[ , !(names(internal_data) == "outcome")],
                                  maxit = 1000)
       response_weights <- predict(object = response_propensity, type = "response")
+      response_coefs <- coef(response_propensity)
     }
     if(response_weight_method == "ridge"){
       ridge_data_response <- data.matrix(
         model.frame(
           response_weight_formula, 
           internal_data[ , !(names(internal_data) == 'outcome')], 
-          na.action = NULL)[ , -1])
+          na.action = NULL)[ , -1, drop = FALSE])
       # automatically select lambda-optimized model
       response_propensity <- cv.glmnet(y = internal_data$response,
                                        x =  cbind(1, ridge_data_response),
@@ -178,7 +180,7 @@ ipwlm <- function(regression_formula,
       response_weights <- predict(response_propensity, 
                                   cbind(1, ridge_data_response), 
                                   type = "response")
-      response_propensity <- response_weight_formula
+      response_coefs <- coef(response_propensity)[-2, ]
     }
     response_weights <- response_weights/sum(response_weights)
     # if conditioning treatment propensity on response weights
@@ -195,13 +197,14 @@ ipwlm <- function(regression_formula,
                                 data = internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))],
                                 maxit = 1000)
     treatment_weights <- predict(object = treatment_propensity, type = "response")
+    treatment_coefs <- coef(treatment_propensity)
   }
   if(treatment_weight_method == "ridge"){
     ridge_data_treatment <- data.matrix(
       model.frame(
         treatment_weight_formula, 
         internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))], 
-        na.action = NULL)[ , -1])
+        na.action = NULL)[ , -1, drop = FALSE])
     treatment_propensity <- cv.glmnet(y = internal_data$treatment,
                                       x =  cbind(1, ridge_data_treatment),
                                       family = "binomial",
@@ -209,7 +212,7 @@ ipwlm <- function(regression_formula,
     treatment_weights <- predict(treatment_propensity, 
                                  cbind(1, ridge_data_treatment),
                                  type = "response")
-    treatment_propensity <- treatment_weight_formula
+    treatment_coefs <- coef(treatment_propensity)[-2, ]
   }
   
   # reorient the treatment_weight for units in control
@@ -280,6 +283,8 @@ ipwlm <- function(regression_formula,
               weights = data.frame(Response = response_weights,
                                    Treatment = treatment_weights,
                                    IPW = internal_data$final_weights),
+              weight_models = list(response = response_coefs,
+                                   treatment = treatment_coefs),
               effect = effect_type,
               attrition = attrition_type
               ))

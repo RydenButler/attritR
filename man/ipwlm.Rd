@@ -9,7 +9,7 @@ ipwlm(regression_formula, treatment, instrument = NULL, data,
   response_weight_method = "logit",
   treatment_weight_formula = data[treatment] ~ .,
   treatment_weight_method = "logit", n_bootstraps = 1000,
-  quantiles = c(0.05, 0.95), n_cores = 1)
+  quantiles = c(0.05, 0.95), n_cores = 1, coef_tol = 10^-5)
 }
 \arguments{
 \item{regression_formula}{An object of class \code{formula} (or one that can 
