@@ -167,18 +167,16 @@ ipwlm <- function(regression_formula,
       response_coefs <- coef(response_propensity)
     }
     if(response_weight_method == "ridge"){
-      ridge_data_response <- data.matrix(
-        model.frame(
-          response_weight_formula, 
-          internal_data[ , !(names(internal_data) == 'outcome')], 
-          na.action = NULL)[ , -1, drop = FALSE])
+      ridge_data_response <- model.matrix(response_weight_formula,
+                                          data = internal_data[ , !(names(internal_data) == "outcome")])
       # automatically select lambda-optimized model
       response_propensity <- cv.glmnet(y = internal_data$response,
-                                       x =  cbind(1, ridge_data_response),
+                                       x =  ridge_data_response,
                                     family = "binomial",
-                                    alpha = 0)
+                                    alpha = 0,
+                                    nlambda = 1000)
       response_weights <- predict(response_propensity, 
-                                  cbind(1, ridge_data_response), 
+                                  ridge_data_response, 
                                   type = "response")
       response_coefs <- coef(response_propensity)[-2, ]
     }
@@ -200,17 +198,15 @@ ipwlm <- function(regression_formula,
     treatment_coefs <- coef(treatment_propensity)
   }
   if(treatment_weight_method == "ridge"){
-    ridge_data_treatment <- data.matrix(
-      model.frame(
-        treatment_weight_formula, 
-        internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))], 
-        na.action = NULL)[ , -1, drop = FALSE])
+    ridge_data_treatment <- model.matrix(treatment_weight_formula,
+                                         data = internal_data[ , !(names(internal_data) %in% c("outcome", "instrument", "response"))])
     treatment_propensity <- cv.glmnet(y = internal_data$treatment,
-                                      x =  cbind(1, ridge_data_treatment),
+                                      x =  ridge_data_treatment,
                                       family = "binomial",
-                                      alpha = 0)
+                                      alpha = 0,
+                                      nlambda = 1000)
     treatment_weights <- predict(treatment_propensity, 
-                                 cbind(1, ridge_data_treatment),
+                                 ridge_data_treatment,
                                  type = "response")
     treatment_coefs <- coef(treatment_propensity)[-2, ]
   }
