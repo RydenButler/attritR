@@ -4,30 +4,21 @@
 \alias{ipwlm}
 \title{Estimating treatment effects given non-random attrition}
 \usage{
-ipwlm(regression_formula, treatment, instrument = NULL, data,
-  effect_type, attrition_type, response_weight_formula = response ~ .,
-  response_weight_method = "logit",
-  treatment_weight_formula = data[treatment] ~ .,
-  treatment_weight_method = "logit", n_bootstraps = 1000,
-  quantiles = c(0.05, 0.95), n_cores = 1, coef_tol = 10^-5)
+ipwlm(regression_formula, data, effect_type, attrition_type,
+  response_weight_method = "logit", treatment_weight_method = "logit",
+  n_bootstraps = 1000, quantiles = c(0.05, 0.95), n_cores = 1)
 }
 \arguments{
 \item{regression_formula}{An object of class \code{formula} (or one that can 
 be coerced to that class); a symbolic description of the model to be fitted.  
 \code{regression_formula} is the model which will be used to estimate the 
 average treatment effect accounting for non-random attrition. Formula must be 
-of the form Y ~ D + ..., where Y is the outcome, D is the treatment, and ... 
-represents any additional covariates, including an instrumental variable when 
-weighting for attrition on unobservables.}
-
-\item{treatment}{A string specifying the treatment variable in the regression.
-The string must match the name of the treatment variable exactly as it is 
-passed into \code{regression_formula}.}
-
-\item{instrument}{A string specifying the instrumental variable in the 
-regression, if one is included. The string must match the name of the 
-treatment variable exactly as it is passed into \code{regression_formula}. If 
-no instrumental variable is used, the argument input should remain \code{NULL}.}
+of the form Y ~ D | Z + D + X | X, where Y is the outcome, D is the 
+treatment, Z is an instrumental variable and X represents any additional 
+covariates. Symbolically, the regression equation is divided into its three
+relevant parts. The first part describes the treatment effect equation, the 
+second part describes the covariates used in modeling response propensity, and
+the third part represents the covariates used in modeling treatment propensity.}
 
 \item{data}{A data.frame which contains all variables specified in
 \code{regression_formula}.}
@@ -46,29 +37,12 @@ confounders. If \code{"unobservable"} is specified, an instrumental variable
 must be included in \code{regression_formula} and its name must be noted in 
 \code{instrument}.}
 
-\item{response_weight_formula}{An object of class \code{formula} (or one that 
-can be coerced to that class); a symbolic description of the model to be 
-fitted. \code{response_weight_formula} specifies the model for estimating 
-respondents' response propensity, which is used in weighting treatment effect
-estimates that account for non-random attrition. By default, the formula 
-includes all covariates on the right-hand side of \code{regression_formula}.}
-
 \item{response_weight_method}{A character string specifying the model 
 which estimates subjects' response propensity. By default, 
 \code{response_weight_method} is set to \code{'logit'}, which 
 fits a binomial logistic regression model. Other valid inputs include 
 \code{'probit'}, which fits a binomial probit regression, and \code{'ridge'},
 which fits a binomial logistic ridge regression.}
-
-\item{treatment_weight_formula}{An object of class \code{formula} (or one that 
-can be coerced to that class); a symbolic description of the model to be 
-fitted. \code{treatment_weight_formula} specifies the model for estimating 
-respondents' treatment propensity, which is used in weighting treatment effect
-estimates that account for non-random attrition. By default, the formula 
-includes only the confounder covariates included on the right-hand side of 
-\code{regression_formula}. When accounting for attrition on unobservables,
-response propensity weights are also included on the right-hand side of the 
-formula.}
 
 \item{treatment_weight_method}{A character string specifying the model 
 which estimates subjects' response propensity. By default, 

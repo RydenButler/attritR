@@ -66,30 +66,12 @@ data("SimulatedAttrition")
 # make intentionally irregular variable names
 names(SimulatedAttrition) <- c('trump_words', 'Tment', 'covariate', 'money_inst')
 
-regression_formula = trump_words ~ Tment + covariate
-treatment = 'Tment'
-instrument = NULL
-data = SimulatedAttrition
-effect_type  = 'population'
-attrition_type = 'observable'
-response_weight_formula = response ~ .
-response_weight_method = 'ridge'
-treatment_weight_formula = treatment ~ .
-treatment_weight_method = 'ridge'
-n_bootstraps = 10
-quantiles = c(0.05, 0.95)
-n_cores = 1
-
 # Prop 3
-out <- ipwlm(regression_formula = trump_words ~ Tment + covariate,
-             treatment = 'Tment',
-             instrument = NULL,
+out <- ipwlm(regression_formula = trump_words ~ Tment | Tment * covariate | covariate,
              data = SimulatedAttrition,
              effect_type  = 'population', # "respondent", "population"
              attrition_type = 'observable', # "treatment", "observable", "unobservable"
-             response_weight_formula = response ~ .,
-             response_weight_method = 'ridge',
-             treatment_weight_formula = treatment ~ .,
+             response_weight_method = 'logit',
              treatment_weight_method = 'ridge',
              n_bootstraps = 10,
              quantiles = c(0.05, 0.95),
@@ -106,16 +88,12 @@ out$coefficients
 out2$effect
 
 # Prop 4
-out <- ipwlm(regression_formula = trump_words ~ Tment + covariate + money_inst,
-    treatment = 'Tment',
-    instrument = 'money_inst',
+out <- ipwlm(regression_formula = trump_words ~ Tment | money_inst + Tment * covariate | covariate,
     data = SimulatedAttrition,
     effect_type  = 'respondent', # "respondent", "population"
     attrition_type = 'unobservable', # "treatment", "observable", "unobservable"
-    response_weight_formula = response ~ .,
-    response_weight_method = 'logit',
-    treatment_weight_formula = treatment ~ .,
-    treatment_weight_method = binomial(link = probit),
+    response_weight_method = 'probit',
+    treatment_weight_method = 'probit',
     n_bootstraps = 10,
     quantiles = c(0.05, 0.95),
     n_cores = 1)
@@ -131,16 +109,12 @@ out$coefficients
 out2$effect
 
 # Prop 5
-out <- ipwlm(regression_formula = trump_words ~ Tment + covariate + money_inst,
-             treatment = 'Tment',
-             instrument = 'money_inst',
+out <- ipwlm(regression_formula = trump_words ~ Tment | money_inst + Tment * covariate | covariate,
              data = SimulatedAttrition,
              effect_type  = 'population', # "respondent", "population"
              attrition_type = 'unobservable', # "treatment", "observable", "unobservable"
-             response_weight_formula = response ~ .,
              response_weight_method = 'probit',
-             treatment_weight_formula = treatment ~ .,
-             treatment_weight_method = binomial(link = probit),
+             treatment_weight_method = 'probit',
              n_bootstraps = 10,
              quantiles = c(0.05, 0.95),
              n_cores = 1)
@@ -154,37 +128,3 @@ out2 <- treatweight(y = SimulatedAttrition$trump_words,
 
 out$coefficients
 out2$effect
-
-
-
-
-# This will tak a moment ...
-#demo(plotAttrition)
-#demo(plotInteraction)
-
-### Efficieny checks ###
-library(microbenchmark)
-# Check parallel bootstrap
-# 4 core parallel is down to 6 seconds. sapplysin bootstrap works best without parallel
-microbenchmark(bootstrapDelta(Y ~ D + X, 
-                              instrumentFormula = ~ Z, 
-                              data = SimulatedAttrition,
-                              effectType = 'Both',
-                              nCores = 4),
-               bootstrapDelta(Y ~ D + X, 
-                              instrumentFormula = ~ Z, 
-                              data = SimulatedAttrition,
-                              effectType = 'Both',
-                              nCores = 1),
-               times = 1)
-
-test <- lineprof(bootstrapDelta(Y ~ Treatment + Covariate, 
-                                instrumentFormula = ~ Instrument, 
-                                data = ObsData,
-                                effectType = 'Both',
-                                nCores = 4))
-shine(test)
-
-
-
-
