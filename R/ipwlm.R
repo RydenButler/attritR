@@ -151,7 +151,6 @@ ipwlm <- function(regression_formula,
                                   type = "response")
       response_coefs <- coef(response_propensity)[-2, ]
     }
-    response_weights <- response_weights/sum(response_weights)
     # if conditioning treatment propensity on response weights
     if(attrition_type == "unobservable"){
       data$response_conditioning <- as.vector(response_weights)
@@ -183,7 +182,6 @@ ipwlm <- function(regression_formula,
   
   # reorient the treatment_weight for units in control
   treatment_weights[data$treatment != 1] <-  (1 - treatment_weights[data$treatment != 1])
-  treatment_weights <- treatment_weights/sum(treatment_weights)
   # if estimating ATE|R, multiplying by response weights is trivial
   if(effect_type == "respondent"){
     response_weights <- 1
@@ -194,6 +192,8 @@ ipwlm <- function(regression_formula,
   }
   # add inverse probability weights to model data
   data$final_weights <- as.vector(1/(treatment_weights * response_weights))
+  # normalize weights
+  # data$final_weights <- data$final_weights/sum(data$final_weights)
   
   ### Estimate Treatment Effect for Relevant Estimator
   treatment_effect_model <- lm(formula = formula(regression_formula, rhs = 1), 

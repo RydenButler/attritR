@@ -67,12 +67,12 @@ data("SimulatedAttrition")
 names(SimulatedAttrition) <- c('trump_words', 'Tment', 'covariate', 'money_inst')
 
 # Prop 3
-out <- ipwlm(regression_formula = trump_words ~ Tment | Tment * covariate | covariate,
+out <- ipwlm(regression_formula = trump_words ~ Tment | Tment + covariate | covariate,
              data = SimulatedAttrition,
              effect_type  = 'population', # "respondent", "population"
              attrition_type = 'observable', # "treatment", "observable", "unobservable"
-             response_weight_method = 'logit',
-             treatment_weight_method = 'ridge',
+             response_weight_method = 'probit',
+             treatment_weight_method = 'probit',
              n_bootstraps = 10,
              quantiles = c(0.05, 0.95),
              n_cores = 1)
@@ -109,7 +109,7 @@ out$coefficients
 out2$effect
 
 # Prop 5
-out <- ipwlm(regression_formula = trump_words ~ Tment | money_inst + Tment * covariate | covariate,
+out <- ipwlm(regression_formula = trump_words ~ Tment | money_inst + Tment + covariate | covariate,
              data = SimulatedAttrition,
              effect_type  = 'population', # "respondent", "population"
              attrition_type = 'unobservable', # "treatment", "observable", "unobservable"

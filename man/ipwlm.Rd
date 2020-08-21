@@ -4,9 +4,17 @@
 \alias{ipwlm}
 \title{Estimating treatment effects given non-random attrition}
 \usage{
-ipwlm(regression_formula, data, effect_type, attrition_type,
-  response_weight_method = "logit", treatment_weight_method = "logit",
-  n_bootstraps = 1000, quantiles = c(0.05, 0.95), n_cores = 1)
+ipwlm(
+  regression_formula,
+  data,
+  effect_type,
+  attrition_type,
+  response_weight_method = "logit",
+  treatment_weight_method = "logit",
+  n_bootstraps = 1000,
+  quantiles = c(0.05, 0.95),
+  n_cores = 1
+)
 }
 \arguments{
 \item{regression_formula}{An object of class \code{formula} (or one that can 

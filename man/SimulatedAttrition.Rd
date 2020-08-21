@@ -4,7 +4,8 @@
 \name{SimulatedAttrition}
 \alias{SimulatedAttrition}
 \title{Data with simulated attrition on unobservables.}
-\format{A data frame with 1000 rows and 4 variables:
+\format{
+A data frame with 1000 rows and 4 variables:
 \describe{
   \item{Y}{Response variable generated from the equation 
   Y = 1*Treatment + 1*Covariate + 0.25*Treatment*Covariate + U;
@@ -16,7 +17,8 @@
   \item{X}{Covariate generated from random draws on a uniform distribution from -1 to 1.}
   \item{Z}{Instrument generated from random draws on a uniform distribution from -1 to 2.}
   ...
-}}
+}
+}
 \usage{
 SimulatedAttrition
 }
